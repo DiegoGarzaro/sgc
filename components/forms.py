@@ -1,12 +1,13 @@
 from django import forms
 from .models import Component
 
+
 class ComponentForm(forms.ModelForm):
     class Meta:
         model = Component
         fields = [
-            'title', 'category', 'sub_category', 'package', 'brand', 
-            'description', 'location', 'equivalent', 'datasheet', 
+            'title', 'category', 'sub_category', 'package', 'brand',
+            'description', 'location', 'equivalent', 'datasheet',
             'image', 'serie_number', 'price', 'quantity'
         ]
         widgets = {

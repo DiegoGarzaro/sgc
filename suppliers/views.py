@@ -19,7 +19,7 @@ class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             queryset = queryset.filter(name__icontains=name)
 
         return queryset
-    
+
 
 class SupplierCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = models.Supplier
@@ -41,6 +41,7 @@ class SupplierUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView
     form_class = forms.SupplierForm
     success_url = reverse_lazy('supplier_list')
     permission_required = 'suppliers.change_supplier'
+
 
 class SupplierDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = models.Supplier

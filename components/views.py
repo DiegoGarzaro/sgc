@@ -4,7 +4,6 @@ from django.views.generic import ListView, CreateView, DetailView, UpdateView, D
 from .models import Component, Category, SubCategory, Brand
 from .forms import ComponentForm
 from app import metrics
-from django.db.models import Q
 from django.core.serializers.json import DjangoJSONEncoder
 import json
 
@@ -46,19 +45,20 @@ class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             queryset = queryset.order_by(sort_by)
 
         return queryset
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['component_metrics'] = metrics.get_component_metrics()
         context['categories'] = Category.objects.all()
         context['sub_categories'] = SubCategory.objects.all()
         context['brands'] = Brand.objects.all()
-        
+
         # Add sorting parameters to context
         context['current_sort'] = self.request.GET.get('sort', 'title')
         context['current_order'] = self.request.GET.get('order', 'asc')
-        
+
         return context
+
 
 class ComponentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Component
@@ -67,11 +67,13 @@ class ComponentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVie
     success_url = reverse_lazy('component_list')
     permission_required = 'components.add_component'
 
+
 class ComponentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     model = Component
     template_name = 'component_detail.html'
     context_object_name = 'component'
     permission_required = 'components.view_component'
+
 
 class ComponentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Component
@@ -109,6 +111,7 @@ class ComponentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
         self.object.equivalents.set(equivalents)
 
         return response
+
 
 class ComponentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Component

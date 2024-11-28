@@ -15,6 +15,7 @@ def remove_permissions(backend, user, *args, **kwargs):
         user.is_active = False
         user.save()
 
+
 def check_user_status(backend, user, request, *args, **kwargs):
     """
     Check if the user is active. If not, display a message and redirect to login.

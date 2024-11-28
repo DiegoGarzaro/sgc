@@ -19,7 +19,7 @@ class SubCategoryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView)
             queryset = queryset.filter(name__icontains=name)
 
         return queryset
-    
+
 
 class SubCategoryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = models.SubCategory
@@ -28,10 +28,12 @@ class SubCategoryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateV
     success_url = reverse_lazy('sub_category_list')
     permission_required = 'sub_categories.add_subcategory'
 
+
 class SubCategoryDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     model = models.SubCategory
     template_name = 'sub_category_detail.html'
     permission_required = 'sub_categories.view_subcategory'
+
 
 class SubCategoryUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = models.SubCategory
@@ -39,6 +41,7 @@ class SubCategoryUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateV
     form_class = forms.SubCategory
     success_url = reverse_lazy('sub_category_list')
     permission_required = 'sub_categories.change_subcategory'
+
 
 class SubCategoryDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = models.SubCategory

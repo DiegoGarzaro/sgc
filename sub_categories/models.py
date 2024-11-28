@@ -1,6 +1,7 @@
 from django.db import models
 from categories.models import Category  # Import the Category model
 
+
 class SubCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories', null=True, blank=True)
     name = models.CharField(max_length=500)

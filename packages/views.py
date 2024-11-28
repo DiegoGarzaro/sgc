@@ -19,7 +19,7 @@ class PackageListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             queryset = queryset.filter(name__icontains=name)
 
         return queryset
-    
+
 
 class PackageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = models.Package
@@ -44,6 +44,7 @@ class PackageUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
     form_class = forms.PackageForm
     success_url = reverse_lazy('package_list')
     permission_required = 'packages.change_package'
+
 
 class PackageDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = models.Package

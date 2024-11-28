@@ -6,14 +6,15 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from . import metrics
 
+
 @login_required(login_url='login')
 def home(request):
     # Lista padrão de thresholds
     standard_thresholds = [5, 10, 15, 20, 25, 50]
-    
+
     # Obtém o threshold a partir do parâmetro GET, padrão é 10 se não for fornecido
     low_stock_threshold = request.GET.get('low_stock_threshold', 10)
-    
+
     # Converte low_stock_threshold para inteiro
     try:
         low_stock_threshold = int(low_stock_threshold)
@@ -23,7 +24,7 @@ def home(request):
     component_metrics = metrics.get_component_metrics()
     component_quantity = metrics.get_component_quantity()
     component_quantity_per_category = metrics.get_component_quantity_per_category()
-    
+
     # Obtém os componentes com estoque baixo com o threshold especificado
     low_stock_components = metrics.get_low_stock_components(threshold=low_stock_threshold)
 
