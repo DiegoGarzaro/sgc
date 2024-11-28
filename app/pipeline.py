@@ -8,18 +8,19 @@ User = get_user_model()
 
 def prevent_duplicate_user(backend, uid, user=None, *args, **kwargs):
     """
-    Prevent duplicate accounts for the same email.
+    Prevent duplicate accounts for the same email and associate existing users.
     """
     email = kwargs.get('details', {}).get('email')
 
-    # Check if the user already exists
+    # If no user is associated and email exists, try to find an existing user
     if email and not user:
         existing_user = User.objects.filter(email=email).first()
         if existing_user:
-            raise AuthException(
-                backend,
-                "A user with this email already exists. Please contact support if this is unexpected."
-            )
+            # Associate the existing user with the social account
+            return {'user': existing_user}
+
+    # If no email or no user found, allow the pipeline to create a new user
+    return {}
 
 
 def remove_permissions(backend, user, *args, **kwargs):
@@ -38,9 +39,9 @@ def remove_permissions(backend, user, *args, **kwargs):
 
 def set_user_inactive(backend, user, *args, **kwargs):
     """
-    Set the user as inactive after creation.
+    Set newly created users as inactive.
     """
-    if user and user.is_active:  # Ensure this only applies to new users
+    if user and not user.is_active:  # Apply only to new users
         user.is_active = False
         user.save()
 
