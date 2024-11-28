@@ -1,0 +1,42 @@
+<!-- Certifique-se de incluir o Font Awesome no seu projeto -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<div class="row mt-4">
+  <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+    <div class="card text-center h-100 shadow-sm">
+      <div class="card-body">
+        <i class="fas fa-boxes fa-3x text-primary mb-3"></i>
+        <h5 class="card-title">Quantidade de Componentes</h5>
+        <p class="card-text display-6 fw-bold">{{ component_metrics.total_quantity }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+    <div class="card text-center h-100 shadow-sm">
+      <div class="card-body">
+        <i class="fas fa-dollar-sign fa-3x text-success mb-3"></i>
+        <h5 class="card-title">Valor do Estoque</h5>
+        <p class="card-text display-6 fw-bold">R$ {{ component_metrics.total_price }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+    <div class="card text-center h-100 shadow-sm">
+      <div class="card-body">
+        <i class="fas fa-cubes fa-3x text-warning mb-3"></i>
+        <h5 class="card-title">Contagem de Componentes</h5>
+        <p class="card-text display-6 fw-bold">{{ component_metrics.component_count }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS personalizado para efeitos de hover -->
+<style>
+  .card:hover {
+    transform: translateY(-5px);
+    transition: transform 0.2s;
+  }
+</style>

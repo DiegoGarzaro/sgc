@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+  <h3 class="display-6">Detalhes do Componente</h3>
+
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">{{ object.title }}</h3>
+      <p class="card-text"><strong>Categoria:</strong> {{ object.category.name }}</p>
+      <p class="card-text"><strong>Sub-Categoria:</strong> {{ object.sub_category.name }}</p>
+      <p class="card-text"><strong>Encapsulamento:</strong> {{ object.package.name }}</p>
+      <p class="card-text"><strong>Marca:</strong> {{ object.brand.name }}</p>
+      <p class="card-text"><strong>Descrição:</strong> {{ object.description }}</p>
+      <p class="card-text"><strong>Localização:</strong> {{ object.location }}</p>
+      
+      <!-- Display Equivalent Components with Hyperlinks -->
+      {% if object.equivalents.exists %}
+        <p class="card-text"><strong>Equivalentes:</strong></p>
+        <ul>
+          {% for equivalent in object.equivalents.all %}
+            <li>
+              <a href="{% url 'component_detail' equivalent.id %}">
+                {{ equivalent.title }} ({{ equivalent.serie_number }})
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="card-text"><strong>Equivalentes:</strong> Nenhum equivalente disponível.</p>
+      {% endif %}
+
+      {% if object.datasheet %}
+        <p class="card-text"><strong>Datasheet:</strong> <a href="{{ object.datasheet.url }}" target="_blank">Baixar</a></p>
+      {% else %}
+        <p class="card-text"><strong>Datasheet:</strong> Nenhum datasheet disponível.</p>
+      {% endif %}
+
+      {% if object.image %}
+        <img src="{{ object.image.url }}" class="img-fluid mt-3" alt="{{ object.title }}">
+      {% else %}
+        <p class="text-muted mt-3">Nenhuma imagem disponível.</p>
+      {% endif %}
+
+      <p class="card-text"><strong>Número de Série:</strong> {{ object.serie_number }}</p>
+      <p class="card-text"><strong>Preço:</strong> R$ {{ object.price }}</p>
+      <p class="card-text"><strong>Quantidade:</strong> {{ object.quantity }}</p>
+      <!-- <p class="card-text"><strong>Criado em:</strong> {{ object.created_at|date:"d/m/Y H:i" }}</p>
+      <p class="card-text"><strong>Atualizado em:</strong> {{ object.updated_at|date:"d/m/Y H:i" }}</p> -->
+    </div>
+  </div>
+
+  <a href="{% url 'component_list' %}" class="btn btn-secondary mt-3">Voltar para Lista de Componentes</a>
+</div>
+
+{% endblock %}

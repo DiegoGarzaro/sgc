@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="display-6">Editar Componente</h3>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" id="componentForm">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        
+        <!-- Existing fields before equivalent -->
+        <div class="mb-3">
+          {{ form.title.label_tag }}
+          {{ form.title }}
+          {{ form.title.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.category.label_tag }}
+          {{ form.category }}
+          {{ form.category.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.sub_category.label_tag }}
+          {{ form.sub_category }}
+          {{ form.sub_category.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.package.label_tag }}
+          {{ form.package }}
+          {{ form.package.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.brand.label_tag }}
+          {{ form.brand }}
+          {{ form.brand.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.description.label_tag }}
+          {{ form.description }}
+          {{ form.description.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.location.label_tag }}
+          {{ form.location }}
+          {{ form.location.errors }}
+        </div>
+
+        <!-- New Equivalent Components Section -->
+        <div class="mb-3">
+          <label class="form-label">Componentes Equivalentes</label>
+          <div id="equivalentContainer">
+            {% for equiv in equivalent_components %}
+            <div class="equivalent-item mb-2 d-flex align-items-center gap-2">
+              <select name="equivalent[]" class="form-select equivalent-select">
+                <option value="">Selecionar Componente Equivalente</option>
+                {% for component in all_components %}
+                {% if component.id != component_id %}  <!-- Prevent self-selection -->
+                <option value="{{ component.id }}" {% if component.id == equiv.id %}selected{% endif %}>
+                  {{ component.title }} ({{ component.serie_number }})
+                </option>
+                {% endif %}
+                {% endfor %}
+              </select>
+              <button type="button" class="btn btn-danger btn-sm remove-equivalent">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addEquivalent">
+            <i class="bi bi-plus-lg"></i> Adicionar Componente Equivalente
+          </button>
+        </div>
+
+        <!-- Remaining fields after equivalent -->
+        <div class="mb-3">
+          {{ form.datasheet.label_tag }}
+          {{ form.datasheet }}
+          {{ form.datasheet.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.image.label_tag }}
+          {{ form.image }}
+          {{ form.image.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.serie_number.label_tag }}
+          {{ form.serie_number }}
+          {{ form.serie_number.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.price.label_tag }}
+          {{ form.price }}
+          {{ form.price.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.quantity.label_tag }}
+          {{ form.quantity }}
+          {{ form.quantity.errors }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Salvar Componente</button>
+      </form>
+    </div>
+  </div>
+  <a href="{% url 'component_list' %}" class="btn btn-secondary mt-3">Cancelar e Voltar para Lista de Componentes</a>
+</div>
+
+<script type="application/json" id="allComponentsData">
+  {{ all_components_json|safe }}
+</script>
+<script type="application/json" id="existingEquivalentsData">
+  {{ existing_equivalents_json|safe }}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const equivalentContainer = document.getElementById('equivalentContainer');
+    const addEquivalentBtn = document.getElementById('addEquivalent');
+
+    let selectedComponents = new Set(); // Keep track of selected component IDs
+
+    // Parse JSON data from the template
+    const allComponents = JSON.parse(document.getElementById('allComponentsData').textContent);
+
+    // Function to create a new equivalent select
+    function createEquivalentSelect(selectedValue = '') {
+        const equivalentDiv = document.createElement('div');
+        equivalentDiv.className = 'equivalent-item mb-2 d-flex align-items-center gap-2';
+
+        const select = document.createElement('select');
+        select.className = 'form-select equivalent-select';
+        select.name = 'equivalent[]';
+
+        // Populate options, excluding already selected components
+        const options = generateOptions(selectedValue);
+        select.innerHTML = options;
+
+        // Set the initial selected value if provided
+        if (selectedValue) {
+            select.value = selectedValue;
+            selectedComponents.add(selectedValue); // Track this selection
+        }
+
+        // Add change event listener to update selected components
+        select.addEventListener('change', function () {
+            const previousValue = select.getAttribute('data-previous-value');
+            const currentValue = select.value;
+
+            // Remove the previous value from the selected set
+            if (previousValue) {
+                selectedComponents.delete(previousValue);
+            }
+
+            // Add the new value to the selected set
+            if (currentValue) {
+                selectedComponents.add(currentValue);
+            }
+
+            // Update the previous value attribute
+            select.setAttribute('data-previous-value', currentValue);
+
+            // Refresh all dropdowns to exclude selected options
+            updateAllDropdowns();
+        });
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-danger btn-sm remove-equivalent';
+        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+
+        // Add remove event listener
+        removeBtn.addEventListener('click', function () {
+            const currentValue = select.value;
+
+            // Remove the current value from the selected set
+            if (currentValue) {
+                selectedComponents.delete(currentValue);
+            }
+
+            // Remove the entire equivalent div
+            equivalentContainer.removeChild(equivalentDiv);
+
+            // Refresh all dropdowns
+            updateAllDropdowns();
+        });
+
+        equivalentDiv.appendChild(select);
+        equivalentDiv.appendChild(removeBtn);
+
+        return equivalentDiv;
+    }
+
+    // Generate dropdown options, excluding already selected components
+    function generateOptions(selectedValue) {
+        let options = '<option value="">Selecionar Componente Equivalente</option>';
+        allComponents.forEach(component => {
+            const isSelected = selectedComponents.has(component.id.toString());
+            const isCurrentValue = selectedValue === component.id.toString();
+            if (!isSelected || isCurrentValue) {
+                options += `<option value="${component.id}">${component.title} (${component.serie_number || 'None'})</option>`;
+            }
+        });
+        return options;
+    }
+
+    // Refresh all dropdowns to reflect the current selected components
+    function updateAllDropdowns() {
+        const selects = document.querySelectorAll('.equivalent-select');
+        selects.forEach(select => {
+            const currentValue = select.value; // Save the current value
+            const options = generateOptions(currentValue); // Regenerate options
+            select.innerHTML = options; // Refresh the dropdown
+            select.value = currentValue; // Restore the current value
+        });
+    }
+
+    // Add new equivalent select on button click
+    addEquivalentBtn.addEventListener('click', function () {
+        const newEquivalentSelect = createEquivalentSelect();
+        equivalentContainer.appendChild(newEquivalentSelect);
+        updateAllDropdowns(); // Refresh all dropdowns
+    });
+
+    // Preload existing equivalents if any
+    const existingEquivalents = JSON.parse(document.getElementById('existingEquivalentsData').textContent || '[]');
+    existingEquivalents.forEach(equiv => {
+        const preloadedSelect = createEquivalentSelect(equiv.id.toString());
+        equivalentContainer.appendChild(preloadedSelect);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Login - SGC Componentes
+{% endblock %}
+
+{% block content %}
+<!-- Estilos personalizados para a página de login no tema escuro -->
+<style>
+  .login-container {
+    min-height: 100vh;
+  }
+
+  .login-card {
+    max-width: 400px;
+    margin: auto;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .login-card .card-header {
+    background-color: #343a40;
+    color: #fff;
+  }
+
+  .login-card .form-control {
+    border-radius: 50px;
+    background-color: #495057;
+    color: #fff;
+    border: 1px solid #6c757d;
+  }
+
+  .login-card .form-control::placeholder {
+    color: #ced4da;
+  }
+
+  .login-card .input-group-text {
+    background-color: #495057;
+    color: #fff;
+    border: 1px solid #6c757d;
+  }
+
+  .login-card .btn-primary {
+    border-radius: 50px;
+  }
+
+  .login-card .social-btn {
+    border-radius: 50px;
+    background-color: #db4437;
+    color: #fff;
+  }
+
+  .login-card .social-btn:hover {
+    background-color: #c23321;
+    color: #fff;
+  }
+
+  .login-card .card-footer {
+    background-color: #343a40;
+  }
+
+  .login-card .card-footer a {
+    color: #fff;
+  }
+
+  /* Ajuste para mensagens de erro */
+  .alert-danger {
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+  }
+</style>
+
+<div class="container login-container d-flex align-items-center">
+  <div class="login-card w-100">
+    <div class="card shadow-lg bg-dark text-white">
+      <div class="card-header text-center">
+        <h4>Bem-vindo ao SGC Componentes</h4>
+      </div>
+      <div class="card-body">
+        <!-- Mensagens do Django Messages Framework -->
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} text-center">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Mensagens de erro do formulário -->
+        {% if form.errors %}
+          <div class="alert alert-danger text-center">
+            Usuário ou senha inválidos. Por favor, tente novamente.
+          </div>
+        {% endif %}
+
+        <!-- Botão de Login com Google -->
+        <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn social-btn w-100 mb-3">
+          <i class="fab fa-google"></i> Entrar com Google
+        </a>
+
+        <hr class="my-4 text-secondary">
+
+        <!-- Formulário de Login -->
+        <form method="post" action="{% url 'login' %}" autocomplete="off">
+          {% csrf_token %}
+          <div class="mb-3 input-group">
+            <span class="input-group-text">
+              <i class="fas fa-user"></i>
+            </span>
+            <input type="text" id="username" name="username" class="form-control" placeholder="Usuário" required autocomplete="off">
+          </div>
+          <div class="mb-3 input-group">
+            <span class="input-group-text">
+              <i class="fas fa-lock"></i>
+            </span>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Senha" required autocomplete="off">
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        </form>
+      </div>
+      <div class="card-footer text-center">
+        <small>
+          Esqueceu a senha? <a href="{% url 'password_reset' %}">Recuperar senha</a>
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Inclua o Font Awesome para os ícones -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}

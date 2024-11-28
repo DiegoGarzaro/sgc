@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+
+{% block title %}
+SGC - Componentes
+{% endblock %}
+
+{% block content %}
+
+{% include 'components/_component_metrics.html' %}
+
+<div class="mb-4"></div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewModalLabel">Visualização do Componente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6 text-center">
+            <div id="previewImageContainer" class="border rounded p-3 d-flex align-items-center justify-content-center" style="min-height: 200px;">
+              <!-- Populated with image or default icon -->
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h4 id="previewTitle"></h4>
+            <p><strong>Categoria:</strong> <span id="previewCategory"></span></p>
+            <p><strong>Subcategoria:</strong> <span id="previewSubCategory"></span></p>
+            <p><strong>Descrição:</strong> <span id="previewDescription"></span></p>
+            <p><strong>Preço:</strong> R$ <span id="previewPrice"></span></p>
+            <p><strong>Quantidade:</strong> <span id="previewQuantity"></span></p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        <a id="previewDetailLink" href="#" class="btn btn-primary">Ver Detalhes</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if perms.components.add_component %}
+<div class="row mb-3">
+  <div class="col-md-12 text-end pe-4">
+    <a href="{% url 'component_create' %}" class="btn btn-success">
+      <i class="bi bi-plus"></i> Adicionar Componente
+    </a>
+  </div>
+</div>
+{% endif %}
+
+<div class="card mb-3">
+  <div class="card-header">
+    <strong>Filtros</strong>
+  </div>
+  <div class="card-body">
+    <form id="filter-form" method="get" action="{% url 'component_list' %}">
+      <input type="hidden" name="sort" id="sort-field" value="{{ request.GET.sort|default:'' }}">
+      <input type="hidden" name="order" id="sort-order" value="{{ request.GET.order|default:'' }}">
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label for="title" class="form-label">Nome do Componente</label>
+          <input type="text" class="form-control" name="title" id="title" placeholder="Buscar por nome" value="{{ request.GET.title }}">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="category" class="form-label">Categoria</label>
+          <select name="category" id="category" class="form-select">
+            <option value="">Todas</option>
+            {% for category in categories %}
+              <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="sub_category" class="form-label">Subcategoria</label>
+          <select name="sub_category" id="sub_category" class="form-select">
+            <option value="">Todas</option>
+            {% for sub_category in sub_categories %}
+              <option value="{{ sub_category.id }}" {% if request.GET.sub_category == sub_category.id|stringformat:"s" %}selected{% endif %}>{{ sub_category.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="brand" class="form-label">Marca</label>
+          <select name="brand" id="brand" class="form-select">
+            <option value="">Todas</option>
+            {% for brand in brands %}
+              <option value="{{ brand.id }}" {% if request.GET.brand == brand.id|stringformat:"s" %}selected{% endif %}>{{ brand.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-striped table-bordered">
+    <thead class="thead-dark">
+      <tr>
+        <th class="text-center">Imagem</th>
+        <th>
+          <div class="d-flex align-items-center cursor-pointer sort-header" data-sort="title">
+            Nome
+            <div class="ms-2 d-flex flex-column sort-arrows">
+              <i class="bi bi-caret-up-fill {% if request.GET.sort == 'title' and request.GET.order == 'asc' %}text-primary{% else %}text-muted{% endif %}" 
+                 style="font-size: 0.7rem; margin-bottom: -3px;"></i>
+              <i class="bi bi-caret-down-fill {% if request.GET.sort == 'title' and request.GET.order == 'desc' %}text-primary{% else %}text-muted{% endif %}" 
+                 style="font-size: 0.7rem;"></i>
+            </div>
+          </div>
+        </th>
+        <th>Categoria</th>
+        <th>Subcategoria</th>
+        <th>Descrição</th>
+        <th>Preço (BRL)</th>
+        <th>
+          <div class="d-flex align-items-center cursor-pointer sort-header" data-sort="quantity">
+            Quantidade
+            <div class="ms-2 d-flex flex-column sort-arrows">
+              <i class="bi bi-caret-up-fill {% if request.GET.sort == 'quantity' and request.GET.order == 'asc' %}text-primary{% else %}text-muted{% endif %}" 
+                 style="font-size: 0.7rem; margin-bottom: -3px;"></i>
+              <i class="bi bi-caret-down-fill {% if request.GET.sort == 'quantity' and request.GET.order == 'desc' %}text-primary{% else %}text-muted{% endif %}" 
+                 style="font-size: 0.7rem;"></i>
+            </div>
+          </div>
+        </th>
+        <th class="text-center">Ações</th>
+      </tr>
+    </thead>
+    <tbody id="componentTableBody">
+      {% for component in components %}
+      <tr>
+        <td class="text-center">
+          {% if component.image %}
+            <img src="{{ component.image.url }}" alt="Imagem do Componente" style="width: 50px; height: auto;">
+          {% else %}
+            <i class="bi bi-image" style="font-size: 1.5rem;"></i>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'component_detail' component.id %}" class="text-info preview-trigger"
+             data-title="{{ component.title }}"
+             data-category="{{ component.category.name }}"
+             data-subcategory="{{ component.sub_category.name }}"
+             data-description="{{ component.description }}"
+             data-price="{{ component.price|default:'0.00' }}"
+             data-quantity="{{ component.quantity }}"
+             {% if component.image %}data-image="{{ component.image.url }}"{% endif %}
+             data-detail-url="{% url 'component_detail' component.id %}">
+            {{ component.title }}
+          </a>
+        </td>
+        <td>{{ component.category.name }}</td>
+        <td>{{ component.sub_category.name }}</td>
+        <td>{{ component.description }}</td>
+        <td>R$ {{ component.price|default:"0.00" }}</td>
+        <td>{{ component.quantity }}</td>
+        <td class="text-center">
+          <div role="group">
+            {% if perms.components.view_component %}
+            <a href="{% url 'component_detail' component.id %}" class="btn btn-info btn-sm">
+              <i class="bi bi-eye"></i>
+            </a>
+            {% endif %}
+            {% if perms.components.change_component %}
+            <a href="{% url 'component_update' component.id %}" class="btn btn-warning btn-sm">
+              <i class="bi bi-pencil"></i>
+            </a>
+            {% endif %}
+            {% if perms.components.delete_component %}
+            <a href="{% url 'component_delete' component.id %}" class="btn btn-danger btn-sm">
+              <i class="bi bi-trash"></i>
+            </a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% include 'components/_pagination.html' %}
+
+<script>
+  // Form submission handler
+  document.querySelectorAll('#filter-form input, #filter-form select').forEach(element => {
+    element.addEventListener('change', () => {
+      document.getElementById('filter-form').submit();
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Sorting functionality
+    document.querySelectorAll('.sort-header').forEach(header => {
+      header.style.cursor = 'pointer';
+      
+      header.addEventListener('click', function() {
+        const sortField = this.dataset.sort;
+        const currentSort = document.getElementById('sort-field').value;
+        const currentOrder = document.getElementById('sort-order').value;
+        
+        let newOrder = 'asc';
+        if (sortField === currentSort) {
+          // Toggle order if clicking the same field
+          newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        }
+        
+        // Update hidden form fields
+        document.getElementById('sort-field').value = sortField;
+        document.getElementById('sort-order').value = newOrder;
+
+        // Submit the form
+        document.getElementById('filter-form').submit();
+      });
+    });
+  });
+
+  // Add hover effect to sort headers
+  document.querySelectorAll('.sort-header').forEach(header => {
+    header.addEventListener('mouseenter', function() {
+      this.style.backgroundColor = 'rgba(0,0,0,0.05)';
+    });
+    
+    header.addEventListener('mouseleave', function() {
+      this.style.backgroundColor = 'transparent';
+    });
+  });
+
+  // Preview Modal functionality remains the same
+  document.addEventListener('DOMContentLoaded', function () {
+    const filterForm = document.getElementById('filter-form');
+    const componentTableBody = document.getElementById('componentTableBody');
+    const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+    let hoverTimer = null;
+  
+    // Debounce function for filtering
+    function debounce(func, delay) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+  
+    // Dynamically filter components
+    function applyFilter() {
+      const formData = new FormData(filterForm);
+      const query = new URLSearchParams(formData).toString();
+  
+      fetch(`${filterForm.action}?${query}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      })
+        .then(response => response.text())
+        .then(data => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(data, 'text/html');
+          const newTableBody = doc.getElementById('componentTableBody');
+          componentTableBody.innerHTML = newTableBody.innerHTML;
+          attachHoverEvents(); // Reattach hover events after table update
+        })
+        .catch(error => console.error('Error fetching filtered data:', error));
+    }
+  
+    // Show preview with a delay
+    function showPreview(trigger) {
+      const imageContainer = document.getElementById('previewImageContainer');
+      imageContainer.innerHTML = '';
+  
+      if (trigger.dataset.image) {
+        const img = document.createElement('img');
+        img.src = trigger.dataset.image;
+        img.className = 'img-fluid';
+        img.alt = trigger.dataset.title;
+        imageContainer.appendChild(img);
+      } else {
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-image';
+        icon.style.fontSize = '8rem';
+        imageContainer.appendChild(icon);
+      }
+  
+      document.getElementById('previewTitle').textContent = trigger.dataset.title;
+      document.getElementById('previewCategory').textContent = trigger.dataset.category;
+      document.getElementById('previewSubCategory').textContent = trigger.dataset.subcategory;
+      document.getElementById('previewDescription').textContent = trigger.dataset.description;
+      document.getElementById('previewPrice').textContent = trigger.dataset.price;
+      document.getElementById('previewQuantity').textContent = trigger.dataset.quantity;
+      document.getElementById('previewDetailLink').href = trigger.dataset.detailUrl;
+  
+      previewModal.show();
+    }
+  
+    // Attach hover events
+    function attachHoverEvents() {
+      document.querySelectorAll('.preview-trigger').forEach(trigger => {
+        trigger.addEventListener('mouseenter', function () {
+          hoverTimer = setTimeout(() => showPreview(this), 1000); // 1-second delay
+        });
+  
+        trigger.addEventListener('mouseleave', function () {
+          clearTimeout(hoverTimer);
+          hoverTimer = null;
+        });
+      });
+    }
+  
+    // Add event listeners for filtering
+    filterForm.querySelectorAll('input, select').forEach(element => {
+      element.addEventListener('input', debounce(applyFilter, 300));
+      element.addEventListener('change', debounce(applyFilter, 300));
+    });
+  
+    // Attach hover events initially
+    attachHoverEvents();
+  });
+  </script>
+
+<style>
+  .sort-header {
+    transition: background-color 0.2s ease;
+    padding: 0.5rem;
+    border-radius: 4px;
+  }
+  
+  .sort-arrows {
+    line-height: 0.5;
+  }
+  
+  .cursor-pointer {
+    cursor: pointer;
+  }
+</style>
+
+{% endblock %}

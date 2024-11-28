@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="display-6">Deletar Sub-Categoria</h3>
+  
+  <div class="card">
+    <div class="card-body">
+      <p class="card-text">Tem certeza que deseja excluir a sub-categoria <strong>{{ object.name }}</strong> associada a <strong>{{ object.category.name }}</strong>?</p>
+      
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger mt-3">Deletar</button>
+      </form>
+      <a href="{% url 'sub_category_list' %}" class="btn btn-secondary mt-3">Cancelar e Voltar para Lista de Sub-Categorias</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

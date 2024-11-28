@@ -1,0 +1,93 @@
+<!-- components/templates/create_component.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="display-6">Criar Novo Componente</h3>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        
+        <div class="mb-3">
+            {{ form.title.label_tag }}
+            {{ form.title }}
+            {{ form.title.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.category.label_tag }}
+            {{ form.category }}
+            {{ form.category.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.sub_category.label_tag }}
+            {{ form.sub_category }}
+            {{ form.sub_category.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.package.label_tag }}
+            {{ form.package }}
+            {{ form.package.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.brand.label_tag }}
+            {{ form.brand }}
+            {{ form.brand.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.description.label_tag }}
+            {{ form.description }}
+            {{ form.description.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.location.label_tag }}
+            {{ form.location }}
+            {{ form.location.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.equivalent.label_tag }}
+            {{ form.equivalent }}
+            {{ form.equivalent.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.datasheet.label_tag }}
+            {{ form.datasheet }}
+            {{ form.datasheet.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.image.label_tag }}
+            {{ form.image }}
+            {{ form.image.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.serie_number.label_tag }}
+            {{ form.serie_number }}
+            {{ form.serie_number.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.price.label_tag }}
+            {{ form.price }}
+            {{ form.price.errors }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.quantity.label_tag }}
+            {{ form.quantity }}
+            {{ form.quantity.errors }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Salvar</button>
+    </form>
+    <a href="{% url 'component_list' %}" class="btn btn-secondary mt-3">Voltar para Lista de Componentes</a>
+</div>
+{% endblock %}
