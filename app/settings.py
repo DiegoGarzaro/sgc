@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'app.middleware.CustomSocialAuthExceptionMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -156,6 +157,9 @@ AUTHENTICATION_BACKENDS = (
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 
+SOCIAL_AUTH_LOGIN_ERROR_URL = '/login/'
+SOCIAL_AUTH_RAISE_EXCEPTIONS = False
+
 LOGIN_URL = 'login'
 
 # Redirect URL after login
@@ -169,11 +173,12 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',
     'social_core.pipeline.social_auth.auth_allowed',
-    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.social_auth.social_user',           # Checks for existing social auth association
     'social_core.pipeline.user.get_username',
-    'social_core.pipeline.user.create_user',  # Cria o usuário se não existir
-    'app.pipeline.check_user_status',    # Função personalizada
-    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.user.create_user',                  # Creates user if not exists
+    'social_core.pipeline.social_auth.associate_user',        # Associates the social account with the user
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
+    'app.pipeline.set_user_inactive',                         # Set new users as inactive
+    'app.pipeline.check_user_status',                         # Checks if user is active
 )
