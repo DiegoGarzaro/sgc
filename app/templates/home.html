@@ -13,76 +13,8 @@ Home - SGC Componentes
 
 <!-- Seção dos componentes com estoque baixo -->
 <div class="row mt-4">
-  <div class="col-12">
-    <div class="card border-warning mb-3">
-      <div class="card-header bg-warning text-black d-flex justify-content-between align-items-center">
-        <div>
-          <i class="fas fa-exclamation-triangle me-2"></i> Componentes com Estoque Baixo
-        </div>
-        <!-- Formulário de filtro de threshold -->
-        <form method="get" class="row g-2 align-items-center">
-          <div class="col-auto">
-            <label for="low_stock_threshold" class="col-form-label text-dark">
-              Mostrar componentes abaixo de:
-            </label>
-          </div>
-          <div class="col-auto">
-            <select name="low_stock_threshold" id="low_stock_threshold" class="form-select form-select-sm"
-              onchange="this.form.submit()">
-              {% for threshold in standard_thresholds %}
-              <option value="{{ threshold }}" {% if low_stock_threshold == threshold %}selected{% endif %}>
-                {{ threshold }} unidades
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-          {% if low_stock_threshold not in standard_thresholds %}
-          <div class="col-auto">
-            <input type="number" name="low_stock_threshold" value="{{ low_stock_threshold }}"
-              class="form-control form-control-sm" min="1" placeholder="Valor personalizado">
-          </div>
-          {% endif %}
-        </form>
-      </div>
-
-      <div class="card-body p-0">
-        <table class="table table-striped table-hover mb-0">
-          <thead class="table-dark">
-            <tr>
-              <th class="ps-4">Fabricante</th>
-              <th>Nome</th>
-              <th>Categoria</th>
-              <th class="text-center">Quantidade Atual</th>
-              <th>Ação Recomendada</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if low_stock_components %}
-            {% for component in low_stock_components %}
-            <tr>
-              <td class="ps-4">{{ component.brand.name }}</td>
-              <td>{{ component.title }}</td>
-              <td>{{ component.category.name }}</td>
-              <td class="text-danger fw-bold text-center">{{ component.quantity|default:0 }}</td>
-              <td>
-                <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top"
-                  title="Estoque crítico, reabasteça o quanto antes!">
-                  <i class="fas fa-exclamation-circle"></i> Comprar Urgente
-                </span>
-              </td>
-            </tr>
-            {% endfor %}
-            {% else %}
-            <tr>
-              <td colspan="5" class="text-center py-3">
-                Nenhum componente encontrado com estoque abaixo de {{ low_stock_threshold }} unidades.
-              </td>
-            </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+  <div class="col-12" id="low-stock-widget">
+    {% include 'components/_low_stock_components.html' %}
   </div>
 </div>
 
@@ -91,24 +23,24 @@ Home - SGC Componentes
 
 <!-- Seção dos gráficos -->
 <div class="row mt-4 justify-content-center">
-  <div class="col-lg-6 col-md-12 text-center">
+  <div class="col-lg-6 col-md-12 text-center mb-4">
     <h5 class="text-center mb-3">Quantidade de Componentes (Últimos 7 dias)</h5>
     <canvas id="componentUsage7days"></canvas>
   </div>
-  <div class="col-lg-6 col-md-12 text-center">
+  <div class="col-lg-6 col-md-12 text-center mb-4">
     <h5 class="text-center mb-3">Quantidade de Componentes por Categorias</h5>
     <canvas id="componentQuantityPerCategory"></canvas>
   </div>
 
-  <!-- Scripts para os gráficos -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
+      // Parse chart data
       var componentUsage7days = JSON.parse('{{ component_quantity|escapejs }}');
       var componentQuantityPerCategory = JSON.parse('{{ component_quantity_per_category|escapejs }}');
 
       // Gráfico de Uso de Componentes nos Últimos 7 Dias
       var ctxComponentUsage = document.getElementById('componentUsage7days').getContext('2d');
-      var componentUsageChart = new Chart(ctxComponentUsage, {
+      new Chart(ctxComponentUsage, {
         type: 'line',
         data: {
           labels: componentUsage7days.dates,
@@ -129,9 +61,7 @@ Home - SGC Componentes
               display: true,
               text: 'Uso de Componentes nos Últimos 7 Dias'
             },
-            legend: {
-              display: false
-            }
+            legend: { display: false }
           },
           scales: {
             y: {
@@ -143,7 +73,7 @@ Home - SGC Componentes
 
       // Gráfico de Quantidade de Componentes por Categoria
       var ctxComponentPerCategory = document.getElementById('componentQuantityPerCategory').getContext('2d');
-      var componentPerCategoryChart = new Chart(ctxComponentPerCategory, {
+      new Chart(ctxComponentPerCategory, {
         type: 'bar',
         data: {
           labels: componentQuantityPerCategory.categories,
@@ -162,9 +92,7 @@ Home - SGC Componentes
               display: true,
               text: 'Componentes por Categoria'
             },
-            legend: {
-              display: false
-            }
+            legend: { display: false }
           },
           scales: {
             y: {
@@ -174,19 +102,43 @@ Home - SGC Componentes
         }
       });
 
-      // Ativa os tooltips do Bootstrap
-      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-      })
+
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const lowStockWidget = document.getElementById('low-stock-widget');
+
+      function updateLowStockWidget() {
+        const form = document.getElementById('low-stock-filter-form');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData).toString();
+
+        fetch(window.location.pathname + '?' + params, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+          .then(response => response.json())
+          .then(data => {
+            lowStockWidget.innerHTML = data.html;
+            activateTooltips();
+            // No need to reattach listeners here because of event delegation
+          })
+          .catch(error => console.error('Error:', error));
+      }
+
+      lowStockWidget.addEventListener('change', function (e) {
+        if (e.target && e.target.id === 'low_stock_threshold') {
+          updateLowStockWidget();
+        }
+      });
+
+      activateTooltips();
     });
   </script>
-</div>
 
-{% else %}
-<div class="alert alert-warning" role="alert">
-  Você não tem permissão para visualizar as métricas.
-</div>
-{% endif %}
+  {% else %}
+  <div class="alert alert-warning" role="alert">
+    Você não tem permissão para visualizar as métricas.
+  </div>
+  {% endif %}
 
-{% endblock %}
+  {% endblock %}

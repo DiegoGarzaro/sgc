@@ -21,9 +21,8 @@ SGC - Componentes
       <div class="modal-body">
         <div class="row">
           <div class="col-md-6 text-center">
-            <div id="previewImageContainer" class="border rounded p-3 d-flex align-items-center justify-content-center" style="min-height: 200px;">
-              <!-- Populated with image or default icon -->
-            </div>
+            <div id="previewImageContainer" class="border rounded p-3 d-flex align-items-center justify-content-center"
+              style="min-height: 200px;"></div>
           </div>
           <div class="col-md-6">
             <h4 id="previewTitle"></h4>
@@ -64,14 +63,18 @@ SGC - Componentes
       <div class="row">
         <div class="col-md-3 mb-3">
           <label for="title" class="form-label">Nome do Componente</label>
-          <input type="text" class="form-control" name="title" id="title" placeholder="Buscar por nome" value="{{ request.GET.title }}">
+          <input type="text" class="form-control" name="title" id="title" placeholder="Buscar por nome"
+            value="{{ request.GET.title }}">
         </div>
         <div class="col-md-3 mb-3">
           <label for="category" class="form-label">Categoria</label>
           <select name="category" id="category" class="form-select">
             <option value="">Todas</option>
             {% for category in categories %}
-              <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+            <option value="{{ category.id }}"
+              {% if request.GET.category|stringformat:"s" == category.id|stringformat:"s" %}selected{% endif %}>
+              {{ category.name }}
+            </option>
             {% endfor %}
           </select>
         </div>
@@ -80,7 +83,10 @@ SGC - Componentes
           <select name="sub_category" id="sub_category" class="form-select">
             <option value="">Todas</option>
             {% for sub_category in sub_categories %}
-              <option value="{{ sub_category.id }}" {% if request.GET.sub_category == sub_category.id|stringformat:"s" %}selected{% endif %}>{{ sub_category.name }}</option>
+            <option value="{{ sub_category.id }}" 
+              {% if request.GET.sub_category|stringformat:"s" == sub_category.id|stringformat:"s" %}selected{% endif %}>
+              {{ sub_category.name }}
+            </option>
             {% endfor %}
           </select>
         </div>
@@ -89,7 +95,10 @@ SGC - Componentes
           <select name="brand" id="brand" class="form-select">
             <option value="">Todas</option>
             {% for brand in brands %}
-              <option value="{{ brand.id }}" {% if request.GET.brand == brand.id|stringformat:"s" %}selected{% endif %}>{{ brand.name }}</option>
+            <option value="{{ brand.id }}"
+              {% if request.GET.brand|stringformat:"s" == brand.id|stringformat:"s" %}selected{% endif %}>
+              {{ brand.name }}
+            </option>
             {% endfor %}
           </select>
         </div>
@@ -98,7 +107,7 @@ SGC - Componentes
   </div>
 </div>
 
-<div class="table-responsive">
+<div class="table-responsive d-none d-md-block">
   <table class="table table-striped table-bordered">
     <thead class="thead-dark">
       <tr>
@@ -107,10 +116,10 @@ SGC - Componentes
           <div class="d-flex align-items-center cursor-pointer sort-header" data-sort="title">
             Nome
             <div class="ms-2 d-flex flex-column sort-arrows">
-              <i class="bi bi-caret-up-fill {% if request.GET.sort == 'title' and request.GET.order == 'asc' %}text-primary{% else %}text-muted{% endif %}" 
-                 style="font-size: 0.7rem; margin-bottom: -3px;"></i>
-              <i class="bi bi-caret-down-fill {% if request.GET.sort == 'title' and request.GET.order == 'desc' %}text-primary{% else %}text-muted{% endif %}" 
-                 style="font-size: 0.7rem;"></i>
+              <i class="bi bi-caret-up-fill {% if request.GET.sort == 'title' and request.GET.order == 'asc' %}text-primary{% else %}text-muted{% endif %}"
+                style="font-size: 0.7rem; margin-bottom: -3px;"></i>
+              <i class="bi bi-caret-down-fill {% if request.GET.sort == 'title' and request.GET.order == 'desc' %}text-primary{% else %}text-muted{% endif %}"
+                style="font-size: 0.7rem;"></i>
             </div>
           </div>
         </th>
@@ -122,10 +131,10 @@ SGC - Componentes
           <div class="d-flex align-items-center cursor-pointer sort-header" data-sort="quantity">
             Quantidade
             <div class="ms-2 d-flex flex-column sort-arrows">
-              <i class="bi bi-caret-up-fill {% if request.GET.sort == 'quantity' and request.GET.order == 'asc' %}text-primary{% else %}text-muted{% endif %}" 
-                 style="font-size: 0.7rem; margin-bottom: -3px;"></i>
-              <i class="bi bi-caret-down-fill {% if request.GET.sort == 'quantity' and request.GET.order == 'desc' %}text-primary{% else %}text-muted{% endif %}" 
-                 style="font-size: 0.7rem;"></i>
+              <i class="bi bi-caret-up-fill {% if request.GET.sort == 'quantity' and request.GET.order == 'asc' %}text-primary{% else %}text-muted{% endif %}"
+                style="font-size: 0.7rem; margin-bottom: -3px;"></i>
+              <i class="bi bi-caret-down-fill {% if request.GET.sort == 'quantity' and request.GET.order == 'desc' %}text-primary{% else %}text-muted{% endif %}"
+                style="font-size: 0.7rem;"></i>
             </div>
           </div>
         </th>
@@ -137,13 +146,14 @@ SGC - Componentes
       <tr>
         <td class="text-center">
           {% if component.image %}
-            <img src="{{ component.image.url }}" alt="Imagem do Componente" style="width: 50px; height: auto;">
+          <img src="{{ component.image.url }}" alt="Imagem do Componente" style="width: 50px; height: auto;">
           {% else %}
-            <i class="bi bi-image" style="font-size: 1.5rem;"></i>
+          <i class="bi bi-image" style="font-size: 1.5rem;"></i>
           {% endif %}
         </td>
         <td>
-          <a href="{% url 'component_detail' component.id %}" class="text-info preview-trigger"
+          <a href="{% url 'component_detail' component.id %}"
+             class="text-info preview-trigger"
              data-title="{{ component.title }}"
              data-category="{{ component.category.name }}"
              data-subcategory="{{ component.sub_category.name }}"
@@ -185,93 +195,110 @@ SGC - Componentes
   </table>
 </div>
 
+<div class="d-block d-md-none">
+  <div class="d-flex justify-content-end mb-2">
+    <div class="btn-group" role="group" aria-label="Sorting">
+      <button type="button" class="btn btn-outline-secondary" onclick="sortCards('name')">Ordenar por Nome</button>
+      <button type="button" class="btn btn-outline-secondary" onclick="sortCards('quantity')">Ordenar por Quantidade</button>
+    </div>
+  </div>
+  <div id="componentCards">
+    {% for component in components %}
+    <div class="card mb-3" data-name="{{ component.title }}" data-quantity="{{ component.quantity }}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <h5 class="card-title">
+            <a href="{% url 'component_detail' component.id %}" class="text-info">
+              {{ component.title }}
+            </a>
+          </h5>
+          {% if component.image %}
+          <img src="{{ component.image.url }}" alt="Imagem do Componente" style="width: 50px; height: auto;">
+          {% else %}
+          <i class="bi bi-image" style="font-size: 1.5rem;"></i>
+          {% endif %}
+        </div>
+        <p class="card-text"><strong>Categoria:</strong> {{ component.category.name }}</p>
+        <p class="card-text"><strong>Subcategoria:</strong> {{ component.sub_category.name }}</p>
+        <p class="card-text"><strong>Descrição:</strong> {{ component.description }}</p>
+        <p class="card-text"><strong>Preço:</strong> R$ {{ component.price|default:"0.00" }}</p>
+        <p class="card-text"><strong>Quantidade:</strong> {{ component.quantity }}</p>
+        <div class="text-end">
+          {% if perms.components.view_component %}
+          <a href="{% url 'component_detail' component.id %}" class="btn btn-info btn-sm">Detalhes</a>
+          {% endif %}
+          {% if perms.components.change_component %}
+          <a href="{% url 'component_update' component.id %}" class="btn btn-warning btn-sm">Editar</a>
+          {% endif %}
+          {% if perms.components.delete_component %}
+          <a href="{% url 'component_delete' component.id %}" class="btn btn-danger btn-sm">Excluir</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% if components|length == 0 %}
+    <p class="text-center">Nenhum componente encontrado.</p>
+    {% endif %}
+  </div>
+</div>
+
 {% include 'components/_pagination.html' %}
 
 <script>
-  // Form submission handler
-  document.querySelectorAll('#filter-form input, #filter-form select').forEach(element => {
-    element.addEventListener('change', () => {
-      document.getElementById('filter-form').submit();
-    });
-  });
-
-  document.addEventListener('DOMContentLoaded', function() {
-    // Sorting functionality
-    document.querySelectorAll('.sort-header').forEach(header => {
-      header.style.cursor = 'pointer';
-      
-      header.addEventListener('click', function() {
-        const sortField = this.dataset.sort;
-        const currentSort = document.getElementById('sort-field').value;
-        const currentOrder = document.getElementById('sort-order').value;
-        
-        let newOrder = 'asc';
-        if (sortField === currentSort) {
-          // Toggle order if clicking the same field
-          newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-        }
-        
-        // Update hidden form fields
-        document.getElementById('sort-field').value = sortField;
-        document.getElementById('sort-order').value = newOrder;
-
-        // Submit the form
-        document.getElementById('filter-form').submit();
-      });
-    });
-  });
-
-  // Add hover effect to sort headers
-  document.querySelectorAll('.sort-header').forEach(header => {
-    header.addEventListener('mouseenter', function() {
-      this.style.backgroundColor = 'rgba(0,0,0,0.05)';
-    });
-    
-    header.addEventListener('mouseleave', function() {
-      this.style.backgroundColor = 'transparent';
-    });
-  });
-
-  // Preview Modal functionality remains the same
   document.addEventListener('DOMContentLoaded', function () {
     const filterForm = document.getElementById('filter-form');
     const componentTableBody = document.getElementById('componentTableBody');
     const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
     let hoverTimer = null;
-  
+
+    // Restore scroll position after page load if available
+    const savedScrollPos = localStorage.getItem('scrollPos');
+    if (savedScrollPos) {
+      window.scrollTo(0, parseInt(savedScrollPos, 10));
+      localStorage.removeItem('scrollPos');
+    }
+
     // Debounce function for filtering
     function debounce(func, delay) {
       let timeout;
-      return function (...args) {
+      return function(...args) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), delay);
       };
     }
-  
-    // Dynamically filter components
+
+    // AJAX filter application (no reload, keeps scroll)
     function applyFilter() {
       const formData = new FormData(filterForm);
       const query = new URLSearchParams(formData).toString();
-  
       fetch(`${filterForm.action}?${query}`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
       })
-        .then(response => response.text())
-        .then(data => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(data, 'text/html');
-          const newTableBody = doc.getElementById('componentTableBody');
+      .then(response => response.text())
+      .then(data => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data, 'text/html');
+        const newTableBody = doc.getElementById('componentTableBody');
+        if (newTableBody) {
           componentTableBody.innerHTML = newTableBody.innerHTML;
-          attachHoverEvents(); // Reattach hover events after table update
-        })
-        .catch(error => console.error('Error fetching filtered data:', error));
+          attachHoverEvents();
+        }
+      })
+      .catch(error => console.error('Error fetching filtered data:', error));
     }
-  
-    // Show preview with a delay
+
+    // Store scroll position and submit form (for sorting or full reload actions)
+    function storeScrollAndSubmit() {
+      localStorage.setItem('scrollPos', window.scrollY.toString());
+      filterForm.submit();
+    }
+
+    // Show preview modal with a delay
     function showPreview(trigger) {
       const imageContainer = document.getElementById('previewImageContainer');
       imageContainer.innerHTML = '';
-  
+
       if (trigger.dataset.image) {
         const img = document.createElement('img');
         img.src = trigger.dataset.image;
@@ -284,7 +311,7 @@ SGC - Componentes
         icon.style.fontSize = '8rem';
         imageContainer.appendChild(icon);
       }
-  
+
       document.getElementById('previewTitle').textContent = trigger.dataset.title;
       document.getElementById('previewCategory').textContent = trigger.dataset.category;
       document.getElementById('previewSubCategory').textContent = trigger.dataset.subcategory;
@@ -292,34 +319,100 @@ SGC - Componentes
       document.getElementById('previewPrice').textContent = trigger.dataset.price;
       document.getElementById('previewQuantity').textContent = trigger.dataset.quantity;
       document.getElementById('previewDetailLink').href = trigger.dataset.detailUrl;
-  
+
       previewModal.show();
     }
-  
-    // Attach hover events
+
+    // Attach hover events to show preview
     function attachHoverEvents() {
       document.querySelectorAll('.preview-trigger').forEach(trigger => {
-        trigger.addEventListener('mouseenter', function () {
-          hoverTimer = setTimeout(() => showPreview(this), 1000); // 1-second delay
+        trigger.addEventListener('mouseenter', function() {
+          hoverTimer = setTimeout(() => showPreview(this), 1000);
         });
-  
-        trigger.addEventListener('mouseleave', function () {
+
+        trigger.addEventListener('mouseleave', function() {
           clearTimeout(hoverTimer);
           hoverTimer = null;
         });
       });
     }
-  
-    // Add event listeners for filtering
+
+    // Sort headers event (full form submit -> store scroll first)
+    document.querySelectorAll('.sort-header').forEach(header => {
+      header.style.cursor = 'pointer';
+      header.addEventListener('click', function() {
+        const sortField = this.dataset.sort;
+        const currentSort = document.getElementById('sort-field').value;
+        const currentOrder = document.getElementById('sort-order').value;
+
+        let newOrder = 'asc';
+        if (sortField === currentSort) {
+          newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        }
+
+        document.getElementById('sort-field').value = sortField;
+        document.getElementById('sort-order').value = newOrder;
+
+        // Store scroll position before submitting
+        storeScrollAndSubmit();
+      });
+    });
+
+    // Hover styling for sort headers
+    document.querySelectorAll('.sort-header').forEach(header => {
+      header.addEventListener('mouseenter', function () {
+        this.style.backgroundColor = 'rgba(0,0,0,0.05)';
+      });
+
+      header.addEventListener('mouseleave', function () {
+        this.style.backgroundColor = 'transparent';
+      });
+    });
+
+    // Trigger AJAX filtering on filter changes
     filterForm.querySelectorAll('input, select').forEach(element => {
-      element.addEventListener('input', debounce(applyFilter, 300));
       element.addEventListener('change', debounce(applyFilter, 300));
     });
-  
-    // Attach hover events initially
+
+    // Initial hover events
     attachHoverEvents();
   });
-  </script>
+
+  // Track the current sort order for each field in mobile view
+  const currentSortOrder = {
+    name: 'asc',
+    quantity: 'asc'
+  };
+
+  function sortCards(criteria) {
+    const cardsContainer = document.getElementById('componentCards');
+    const cards = Array.from(cardsContainer.children);
+
+    // Toggle the order
+    const newOrder = currentSortOrder[criteria] === 'asc' ? 'desc' : 'asc';
+    currentSortOrder[criteria] = newOrder;
+
+    cards.sort((a, b) => {
+      let aValue = a.dataset[criteria];
+      let bValue = b.dataset[criteria];
+
+      if (criteria === 'quantity') {
+        aValue = parseInt(aValue, 10);
+        bValue = parseInt(bValue, 10);
+      } else {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (aValue < bValue) return newOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return newOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    cardsContainer.innerHTML = '';
+    cards.forEach(card => cardsContainer.appendChild(card));
+  }
+</script>
 
 <style>
   .sort-header {
@@ -327,11 +420,11 @@ SGC - Componentes
     padding: 0.5rem;
     border-radius: 4px;
   }
-  
+
   .sort-arrows {
     line-height: 0.5;
   }
-  
+
   .cursor-pointer {
     cursor: pointer;
   }
