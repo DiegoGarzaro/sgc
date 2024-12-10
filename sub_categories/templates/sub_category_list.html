@@ -26,11 +26,10 @@ SGC - Sub-Categorias
   {% endif %}
 </div>
 
-<div class="table-responsive">
+<div class="table-responsive d-none d-md-block">
   <table class="table table-striped table-bordered">
     <thead class="thead-dark">
       <tr>
-        <!-- <th>ID</th> -->
         <th>Nome</th>
         <th>Categoria</th>
         <th>Descrição</th>
@@ -40,7 +39,6 @@ SGC - Sub-Categorias
     <tbody id="subCategoryTableBody">
       {% for sub_category in sub_categories %}
       <tr>
-        <!-- <td>{{ sub_category.id }}</td> -->
         <td>
           <a href="{% url 'sub_category_detail' sub_category.id %}">
             {{ sub_category.name }}
@@ -73,6 +71,41 @@ SGC - Sub-Categorias
   </table>
 </div>
 
+<div class="d-block d-md-none">
+  <div id="subCategoryCards">
+    {% for sub_category in sub_categories %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">
+          <a href="{% url 'sub_category_detail' sub_category.id %}">
+            {{ sub_category.name }}
+          </a>
+        </h5>
+        <p class="card-text">Categoria: {{ sub_category.category.name }}</p>
+        <p class="card-text">Descrição: {{ sub_category.description }}</p>
+        <div class="text-end">
+          {% if perms.sub_categories.view_subcategory %}
+          <a href="{% url 'sub_category_detail' sub_category.id %}" class="btn btn-info btn-sm">
+            Detalhes
+          </a>
+          {% endif %}
+          {% if perms.sub_categories.change_subcategory %}
+          <a href="{% url 'sub_category_update' sub_category.id %}" class="btn btn-warning btn-sm">
+            Editar
+          </a>
+          {% endif %}
+          {% if perms.sub_categories.delete_subcategory %}
+          <a href="{% url 'sub_category_delete' sub_category.id %}" class="btn btn-danger btn-sm">
+            Excluir
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
 {% include 'components/_pagination.html' %}
 
 <script>
@@ -80,7 +113,7 @@ SGC - Sub-Categorias
     const nameFilterInput = document.getElementById('nameFilter');
     const filterForm = document.getElementById('filterForm');
     const subCategoryTableBody = document.getElementById('subCategoryTableBody');
-    
+
     // Function to debounce input events for performance
     function debounce(func, delay) {
       let timeout;

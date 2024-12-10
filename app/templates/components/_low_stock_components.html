@@ -1,0 +1,66 @@
+<!-- _low_stock_components.html -->
+<div class="card border-warning mb-3">
+    <div class="card-header bg-warning text-black d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+      <div class="mb-2 mb-sm-0">
+        <i class="fas fa-exclamation-triangle me-2"></i> Componentes com Estoque Baixo
+      </div>
+      <!-- Filter Form -->
+      <form id="low-stock-filter-form" method="get" class="d-flex flex-wrap align-items-center gap-2 mb-2 mb-sm-0">
+        <label for="low_stock_threshold" class="text-dark mb-0">
+          Mostrar componentes abaixo de:
+        </label>
+        <select name="low_stock_threshold" id="low_stock_threshold" class="form-select form-select-sm">
+          {% for threshold in standard_thresholds %}
+          <option value="{{ threshold }}" {% if low_stock_threshold == threshold %}selected{% endif %}>
+            {{ threshold }} unidades
+          </option>
+          {% endfor %}
+        </select>
+        {% if low_stock_threshold not in standard_thresholds %}
+        <input type="number" name="low_stock_threshold" value="{{ low_stock_threshold }}"
+               class="form-control form-control-sm" min="1" placeholder="Valor personalizado">
+        {% endif %}
+      </form>
+    </div>
+  
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th class="ps-4">Fabricante</th>
+              <th>Nome</th>
+              <th>Categoria</th>
+              <th class="text-center">Quantidade Atual</th>
+              <th>Ação Recomendada</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if low_stock_components %}
+              {% for component in low_stock_components %}
+              <tr>
+                <td class="ps-4">{{ component.brand.name }}</td>
+                <td>{{ component.title }}</td>
+                <td>{{ component.category.name }}</td>
+                <td class="text-danger fw-bold text-center">{{ component.quantity|default:0 }}</td>
+                <td>
+                  <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Estoque crítico, reabasteça o quanto antes!">
+                    <i class="fas fa-exclamation-circle"></i> Comprar Urgente
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center py-3">
+                Nenhum componente encontrado com estoque abaixo de {{ low_stock_threshold }} unidades.
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
