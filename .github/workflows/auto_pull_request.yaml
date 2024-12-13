@@ -3,7 +3,7 @@ name: Automatic Pull Request pipeline
 on: [push, pull_request]
 
 jobs:
-  test:
+  AutoPR:
     runs-on: ubuntu-latest
 
     steps:

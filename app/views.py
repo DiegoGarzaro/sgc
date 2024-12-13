@@ -8,6 +8,7 @@ from django.http import JsonResponse, HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from . import metrics
 
+
 @login_required(login_url='login')
 def home(request: HttpRequest) -> Union[HttpResponse, JsonResponse]:
     # List of standard thresholds with type hint
