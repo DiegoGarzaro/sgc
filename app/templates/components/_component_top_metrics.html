@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .metrics-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            background-color: #1e1e1e;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ff6b00; /* Thin orange border */
+        }
+        .metric-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+            cursor: help;
+            min-width: 120px; /* Ensure minimum width */
+            margin-bottom: 0.5rem; /* Space between rows if wrapped */
+        }
+        .metric-icon {
+            font-size: 1.5rem;
+            color: #6c757d;
+            transition: color 0.3s ease;
+        }
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #e0e0e0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .metric-item:hover .metric-icon {
+            color: #4da6ff;
+        }
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #f0f0f0;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            font-size: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid #444;
+        }
+        .metric-item:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .metrics-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .metric-item {
+                justify-content: space-between;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="metrics-row">
+        <div class="metric-item">
+            <i class="fas fa-boxes metric-icon"></i>
+            <span class="metric-value">{{ component_metrics.total_quantity }}</span>
+            <span class="tooltip">Quantidade de Componentes</span>
+        </div>
+
+        <div class="metric-item">
+            <i class="fas fa-dollar-sign metric-icon"></i>
+            <span class="metric-value">R$ {{ component_metrics.total_price }}</span>
+            <span class="tooltip">Valor Total do Estoque</span>
+        </div>
+
+        <div class="metric-item">
+            <i class="fas fa-cubes metric-icon"></i>
+            <span class="metric-value">{{ component_metrics.component_count }}</span>
+            <span class="tooltip">Contagem de Componentes Únicos</span>
+        </div>
+    </div>
+</body>
+</html>

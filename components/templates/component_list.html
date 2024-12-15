@@ -6,7 +6,7 @@ SGC - Componentes
 
 {% block content %}
 
-{% include 'components/_component_metrics.html' %}
+{% include 'components/_component_top_metrics.html' %}
 
 <div class="mb-4"></div>
 
@@ -369,9 +369,9 @@ SGC - Componentes
       });
     });
 
-    // Trigger AJAX filtering on filter changes
+    // Trigger AJAX filtering on filter input changes
     filterForm.querySelectorAll('input, select').forEach(element => {
-      element.addEventListener('change', debounce(applyFilter, 300));
+      element.addEventListener('input', debounce(applyFilter, 300));
     });
 
     // Initial hover events
