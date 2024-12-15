@@ -1,0 +1,41 @@
+name: Auto Release Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  AutoRelease:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.4'
+
+      - name: Create Python venv
+        run: python -m venv venv
+
+      - name: Install dependencies
+        run: |
+          venv/bin/python -m pip install --upgrade pip
+          venv/bin/python -m pip install commitizen black isort
+
+      - name: Bump Version and Update Changelog
+        run: |
+          NEW_VERSION=$(venv/bin/cz bump --yes --dry-run --files-only | grep -oP '\d+\.\d+\.\d+')
+          echo "VERSION = \"$NEW_VERSION\"" > myapp/version.py
+          venv/bin/cz bump --yes
+
+      - name: Commit and Push Changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore(release): bump version to $NEW_VERSION and update changelog"
+          git push origin main --tags
