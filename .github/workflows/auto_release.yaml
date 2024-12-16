@@ -28,14 +28,13 @@ jobs:
 
       - name: Bump Version
         run: |
-          NEW_VERSION=$(venv/bin/cz bump --yes --dry-run --files-only | grep -oP '\d+\.\d+\.\d+')
-          if [ -z "$NEW_VERSION" ]; then
-            echo "No commits eligible to bump. Skipping version update."
-            exit 0
+          if [ -z "$(git log $(git describe --tags --abbrev=0)..HEAD)" ]; then
+            echo "No new commits since last tag. Skipping cz bump."
+          else
+            echo "VERSION = \"$NEW_VERSION\"" > app/version.py
+            venv/bin/cz bump --yes
+            venv/bin/python -m commitizen bump --yes
           fi
-          echo "VERSION = \"$NEW_VERSION\"" > app/version.py
-          venv/bin/cz bump --yes
-          venv/bin/python -m commitizen bump --yes
 
       - name: Commit and Push Changes
         run: |
