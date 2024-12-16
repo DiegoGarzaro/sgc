@@ -28,12 +28,22 @@ jobs:
 
       - name: Bump Version
         run: |
-          if [ -z "$(git log $(git describe --tags --abbrev=0)..HEAD)" ]; then
-            echo "No new commits since last tag. Skipping cz bump."
+          set +e  # Disable errexit to allow non-zero exit codes without stopping the script
+
+          OUTPUT=$(venv/bin/cz bump --yes 2>&1)
+          EXIT_CODE=$?
+
+          set -e  # Re-enable errexit now that we have captured the exit code
+
+          if [[ "$OUTPUT" == *"[NO_COMMITS_TO_BUMP]"* ]]; then
+              echo "No commits eligible for bump. Exiting without error."
+              exit 0
+          elif [ $EXIT_CODE -ne 0 ]; then
+              echo "An unexpected error occurred during cz bump."
+              echo "$OUTPUT"
+              exit $EXIT_CODE
           else
-            echo "VERSION = \"$NEW_VERSION\"" > app/version.py
-            venv/bin/cz bump --yes
-            venv/bin/python -m commitizen bump --yes
+              echo "Version bumped successfully."
           fi
 
       - name: Commit and Push Changes

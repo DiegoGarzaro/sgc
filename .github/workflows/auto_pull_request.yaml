@@ -36,26 +36,3 @@ jobs:
       - name: Validate Pull Request Title
         if: github.event_name == 'pull_request'
         run: venv/bin/python -m commitizen check --message "${{ github.event.pull_request.title }}"
-
-      - name: Fetch tags
-        run: git fetch --tags --prune --unshallow || git fetch --tags
-
-      - name: Bump Version
-        run: |
-          set +e  # Disable errexit to allow non-zero exit codes without stopping the script
-
-          OUTPUT=$(venv/bin/cz bump --yes 2>&1)
-          EXIT_CODE=$?
-
-          set -e  # Re-enable errexit now that we have captured the exit code
-
-          if [[ "$OUTPUT" == *"[NO_COMMITS_TO_BUMP]"* ]]; then
-              echo "No commits eligible for bump. Exiting without error."
-              exit 0
-          elif [ $EXIT_CODE -ne 0 ]; then
-              echo "An unexpected error occurred during cz bump."
-              echo "$OUTPUT"
-              exit $EXIT_CODE
-          else
-              echo "Version bumped successfully."
-          fi
