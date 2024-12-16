@@ -1,7 +1,7 @@
 [tool.commitizen]
 name = "cz_conventional_commits"  # Use Conventional Commits
 version = "1.0.0"                 # Current version
-tag_format = "v{version}"         # Git tag format
+tag_format = "v$version"         # Git tag format
 update_changelog = true           # Auto-update changelog
 changelog_file = "CHANGELOG.md"   # Path to the changelog file
 

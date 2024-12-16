@@ -24,18 +24,27 @@ jobs:
       - name: Install dependencies
         run: |
           venv/bin/python -m pip install --upgrade pip
-          venv/bin/python -m pip install commitizen black isort
+          venv/bin/python -m pip install commitizen
 
       - name: Bump Version
         run: |
-          NEW_VERSION=$(venv/bin/cz bump --yes --dry-run --files-only | grep -oP '\d+\.\d+\.\d+')
-          if [ -z "$NEW_VERSION" ]; then
-            echo "No commits eligible to bump. Skipping version update."
-            exit 0
+          set +e  # Disable errexit to allow non-zero exit codes without stopping the script
+
+          OUTPUT=$(venv/bin/cz bump --yes 2>&1)
+          EXIT_CODE=$?
+
+          set -e  # Re-enable errexit now that we have captured the exit code
+
+          if [[ "$OUTPUT" == *"[NO_COMMITS_TO_BUMP]"* ]]; then
+              echo "No commits eligible for bump. Exiting without error."
+              exit 0
+          elif [ $EXIT_CODE -ne 0 ]; then
+              echo "An unexpected error occurred during cz bump."
+              echo "$OUTPUT"
+              exit $EXIT_CODE
+          else
+              echo "Version bumped successfully."
           fi
-          echo "VERSION = \"$NEW_VERSION\"" > app/version.py
-          venv/bin/cz bump --yes
-          venv/bin/python -m commitizen bump --yes
 
       - name: Commit and Push Changes
         run: |

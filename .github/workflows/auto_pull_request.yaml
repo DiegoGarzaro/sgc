@@ -32,11 +32,6 @@ jobs:
       - name: Check Import Sorting with Isort
         run: venv/bin/isort --check .
 
-      - name: Debug Commit Message
-        run: |
-          echo "Last commit message:"
-          git log -1 --pretty=%B
-
       # Validate the PR title (for squash merges)
       - name: Validate Pull Request Title
         if: github.event_name == 'pull_request'
