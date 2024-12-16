@@ -30,7 +30,7 @@ jobs:
         run: |
           NEW_VERSION=$(venv/bin/cz bump --yes --dry-run --files-only | grep -oP '\d+\.\d+\.\d+')
           echo "VERSION = \"$NEW_VERSION\"" > app/version.py
-          venv/bin/cz bump --yes
+          venv/bin/python -m commitizen bump --yes
 
       - name: Commit and Push Changes
         run: |
