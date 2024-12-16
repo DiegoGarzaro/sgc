@@ -40,4 +40,4 @@ jobs:
       # Validate the PR title (for squash merges)
       - name: Validate Pull Request Title
         if: github.event_name == 'pull_request'
-        run: cz check --message "${{ github.event.pull_request.title }}"
+        run: venv/bin/python -m commitizen check --message "${{ github.event.pull_request.title }}"
