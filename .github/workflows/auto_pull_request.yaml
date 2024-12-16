@@ -38,4 +38,9 @@ jobs:
           git log -1 --pretty=%B
 
       - name: Validate Commit Messages
-        run: venv/bin/cz check
+        run: |
+          git fetch origin
+          git log origin/main..HEAD --pretty=%B | while read -r message; do
+            echo "Validating commit message: $message"
+            cz check --message "$message"
+          done
