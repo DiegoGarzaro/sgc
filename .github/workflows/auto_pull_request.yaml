@@ -41,3 +41,12 @@ jobs:
       - name: Validate Pull Request Title
         if: github.event_name == 'pull_request'
         run: venv/bin/python -m commitizen check --message "${{ github.event.pull_request.title }}"
+
+      - name: Bump Version
+        run: |
+          NEW_VERSION=$(venv/bin/cz bump --yes --dry-run --files-only | grep -oP '\d+\.\d+\.\d+')
+          if [ -z "$NEW_VERSION" ]; then
+            echo "No commits eligible to bump. Skipping version update."
+            exit 0
+          fi
+          echo "VERSION = \"$NEW_VERSION\"" > app/version.py
