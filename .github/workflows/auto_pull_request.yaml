@@ -42,23 +42,20 @@ jobs:
 
       - name: Bump Version
         run: |
-          # Attempt to bump the version, capturing both output and exit code
-          OUTPUT=$(venv/bin/cz bump --yes 2>&1) 
+          set +e  # Disable errexit to allow non-zero exit codes without stopping the script
+
+          OUTPUT=$(venv/bin/cz bump --yes 2>&1)
           EXIT_CODE=$?
 
-          # Check if the output contains the NO_COMMITS_TO_BUMP message
-          if echo "$OUTPUT" | grep -q "[NO_COMMITS_TO_BUMP]"; then
+          set -e  # Re-enable errexit now that we have captured the exit code
+
+          if [[ "$OUTPUT" == *"[NO_COMMITS_TO_BUMP]"* ]]; then
               echo "No commits eligible for bump. Exiting without error."
               exit 0
-          fi
-
-          # If we reached this point, either the bump was successful or
-          # there was another error. If EXIT_CODE is non-zero and it's not NO_COMMITS_TO_BUMP,
-          # you may want to fail the pipeline to signal a real error.
-          if [ $EXIT_CODE -ne 0 ]; then
+          elif [ $EXIT_CODE -ne 0 ]; then
               echo "An unexpected error occurred during cz bump."
               echo "$OUTPUT"
               exit $EXIT_CODE
+          else
+              echo "Version bumped successfully."
           fi
-
-          echo "Version bumped successfully."
