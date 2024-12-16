@@ -32,5 +32,10 @@ jobs:
       - name: Check Import Sorting with Isort
         run: venv/bin/isort --check .
 
+      - name: Debug Commit Message
+        run: |
+          echo "Last commit message:"
+          git log -1 --pretty=%B
+
       - name: Validate Commit Messages
         run: venv/bin/cz check
