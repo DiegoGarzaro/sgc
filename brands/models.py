@@ -8,7 +8,7 @@ class Brand(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
 
     def __str__(self) -> str:
         return self.name

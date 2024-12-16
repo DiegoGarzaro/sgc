@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('components', '0002_component_location'),
+        ("components", "0002_component_location"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='component',
-            name='datasheet',
-            field=models.FileField(blank=True, null=True, upload_to='datasheets/'),
+            model_name="component",
+            name="datasheet",
+            field=models.FileField(blank=True, null=True, upload_to="datasheets/"),
         ),
     ]

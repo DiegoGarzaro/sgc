@@ -7,13 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('components', '0003_component_datasheet'),
+        ("components", "0003_component_datasheet"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='component',
-            name='equivalent',
-            field=models.ForeignKey(blank=True, limit_choices_to=models.Q(('id__isnull', False)), null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='equivalents', to='components.component'),
+            model_name="component",
+            name="equivalent",
+            field=models.ForeignKey(
+                blank=True,
+                limit_choices_to=models.Q(("id__isnull", False)),
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="equivalents",
+                to="components.component",
+            ),
         ),
     ]

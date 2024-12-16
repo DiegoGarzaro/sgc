@@ -9,32 +9,71 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('brands', '0001_initial'),
-        ('categories', '0001_initial'),
-        ('packages', '0001_initial'),
-        ('sub_categories', '0001_initial'),
+        ("brands", "0001_initial"),
+        ("categories", "0001_initial"),
+        ("packages", "0001_initial"),
+        ("sub_categories", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Component',
+            name="Component",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=500)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('serie_number', models.CharField(blank=True, max_length=200, null=True)),
-                ('cost_price', models.DecimalField(decimal_places=2, max_digits=20)),
-                ('selling_price', models.DecimalField(decimal_places=2, max_digits=20)),
-                ('quantity', models.IntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('brand', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='components', to='brands.brand')),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='components', to='categories.category')),
-                ('package', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='components', to='packages.package')),
-                ('sub_category', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='components', to='sub_categories.subcategory')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=500)),
+                ("description", models.TextField(blank=True, null=True)),
+                (
+                    "serie_number",
+                    models.CharField(blank=True, max_length=200, null=True),
+                ),
+                ("cost_price", models.DecimalField(decimal_places=2, max_digits=20)),
+                ("selling_price", models.DecimalField(decimal_places=2, max_digits=20)),
+                ("quantity", models.IntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "brand",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="components",
+                        to="brands.brand",
+                    ),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="components",
+                        to="categories.category",
+                    ),
+                ),
+                (
+                    "package",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="components",
+                        to="packages.package",
+                    ),
+                ),
+                (
+                    "sub_category",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="components",
+                        to="sub_categories.subcategory",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['title'],
+                "ordering": ["title"],
             },
         ),
     ]
