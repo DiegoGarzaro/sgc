@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('categories', '0001_initial'),
-        ('sub_categories', '0001_initial'),
+        ("categories", "0001_initial"),
+        ("sub_categories", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='subcategory',
-            name='category',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='subcategories', to='categories.category'),
+            model_name="subcategory",
+            name="category",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="subcategories",
+                to="categories.category",
+            ),
         ),
     ]

@@ -29,6 +29,6 @@ addopts = "--strict-markers -v"           # Additional pytest options
 [tool.isort]
 profile = "black"                         # Align isort configuration with Black
 line_length = 88                          # Match Black's line length
-known_first_party = ["sgc"]
+known_first_party = ["app"]
 default_section = "THIRDPARTY"
 skip = ["venv"]                           # Exclude virtual environments
