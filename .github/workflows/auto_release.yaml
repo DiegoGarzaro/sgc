@@ -26,10 +26,15 @@ jobs:
           venv/bin/python -m pip install --upgrade pip
           venv/bin/python -m pip install commitizen black isort
 
-      - name: Bump Version and Update Changelog
+      - name: Bump Version
         run: |
           NEW_VERSION=$(venv/bin/cz bump --yes --dry-run --files-only | grep -oP '\d+\.\d+\.\d+')
+          if [ -z "$NEW_VERSION" ]; then
+            echo "No commits eligible to bump. Skipping version update."
+            exit 0
+          fi
           echo "VERSION = \"$NEW_VERSION\"" > app/version.py
+          venv/bin/cz bump --yes
           venv/bin/python -m commitizen bump --yes
 
       - name: Commit and Push Changes
