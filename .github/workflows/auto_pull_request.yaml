@@ -42,18 +42,23 @@ jobs:
 
       - name: Bump Version
         run: |
-          # Try to find the last tag, or use an empty string if none is found
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
-          if [ -z "$LAST_TAG" ]; then
-            echo "No previous tags found. Skipping cz bump."
-            exit 0
+          # Attempt to bump the version, capturing both output and exit code
+          OUTPUT=$(venv/bin/cz bump --yes 2>&1) 
+          EXIT_CODE=$?
+
+          # Check if the output contains the NO_COMMITS_TO_BUMP message
+          if echo "$OUTPUT" | grep -q "[NO_COMMITS_TO_BUMP]"; then
+              echo "No commits eligible for bump. Exiting without error."
+              exit 0
           fi
 
-          # Check if there are new commits since LAST_TAG
-          if [ -z "$(git log ${LAST_TAG}..HEAD)" ]; then
-            echo "No new commits since last tag. Skipping cz bump."
-          else
-            echo "VERSION = \"$NEW_VERSION\"" > app/version.py
-            venv/bin/cz bump --yes
+          # If we reached this point, either the bump was successful or
+          # there was another error. If EXIT_CODE is non-zero and it's not NO_COMMITS_TO_BUMP,
+          # you may want to fail the pipeline to signal a real error.
+          if [ $EXIT_CODE -ne 0 ]; then
+              echo "An unexpected error occurred during cz bump."
+              echo "$OUTPUT"
+              exit $EXIT_CODE
           fi
+
+          echo "Version bumped successfully."
