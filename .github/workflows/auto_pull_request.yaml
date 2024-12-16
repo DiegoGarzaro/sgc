@@ -43,7 +43,8 @@ jobs:
           if [ -z "$NEW_VERSION" ]; then
             echo "No commits eligible to bump. Skipping version update."
             exit 0
+          else
+            echo "VERSION = \"$NEW_VERSION\"" > app/version.py
+            venv/bin/cz bump --yes
+            venv/bin/python -m commitizen bump --yes
           fi
-          echo "VERSION = \"$NEW_VERSION\"" > app/version.py
-          venv/bin/cz bump --yes
-          venv/bin/python -m commitizen bump --yes
