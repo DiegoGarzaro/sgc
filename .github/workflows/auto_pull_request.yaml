@@ -37,10 +37,7 @@ jobs:
           echo "Last commit message:"
           git log -1 --pretty=%B
 
-      - name: Validate Commit Messages
-        run: |
-          git fetch origin
-          git log origin/main..HEAD --pretty=%B | while read -r message; do
-            echo "Validating commit message: $message"
-            cz check --message "$message"
-          done
+      # Validate the PR title (for squash merges)
+      - name: Validate Pull Request Title
+        if: github.event_name == 'pull_request'
+        run: cz check --message "${{ github.event.pull_request.title }}"
