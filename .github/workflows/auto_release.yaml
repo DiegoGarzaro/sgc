@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           venv/bin/python -m pip install --upgrade pip
-          venv/bin/python -m pip install commitizen black isort
+          venv/bin/python -m pip install commitizen
 
       - name: Bump Version
         run: |
