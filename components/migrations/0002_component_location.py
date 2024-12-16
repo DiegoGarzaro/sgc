@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('components', '0001_initial'),
+        ("components", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='component',
-            name='location',
+            model_name="component",
+            name="location",
             field=models.TextField(blank=True, null=True),
         ),
     ]

@@ -1,0 +1,43 @@
+name: Auto Pull Request Pipeline
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  AutoPR:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.4'
+
+      - name: Create Python venv
+        run: python -m venv venv
+
+      - name: Install dependencies
+        run: |
+          venv/bin/python -m pip install --upgrade pip
+          venv/bin/python -m pip install -r requirements_dev.txt black isort commitizen
+
+      - name: Check Code Formatting with Black
+        run: venv/bin/black --check .
+
+      - name: Check Import Sorting with Isort
+        run: venv/bin/isort --check .
+
+      - name: Debug Commit Message
+        run: |
+          echo "Last commit message:"
+          git log -1 --pretty=%B
+
+      # Validate the PR title (for squash merges)
+      - name: Validate Pull Request Title
+        if: github.event_name == 'pull_request'
+        run: venv/bin/python -m commitizen check --message "${{ github.event.pull_request.title }}"

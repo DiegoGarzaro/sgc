@@ -1,7 +1,8 @@
-from django.utils.formats import number_format
 from django.utils import timezone
-from components.models import Component
+from django.utils.formats import number_format
+
 from categories.models import Category
+from components.models import Component
 from suppliers.models import Supplier
 
 
@@ -9,13 +10,15 @@ def get_component_metrics():
     components = Component.objects.all()
 
     total_quantity = sum((component.quantity or 0) for component in components)
-    total_price = sum((component.price or 0) * (component.quantity or 0) for component in components)
+    total_price = sum(
+        (component.price or 0) * (component.quantity or 0) for component in components
+    )
     component_count = len(components) or 0
 
     return dict(
         total_quantity=total_quantity,
         total_price=number_format(total_price, decimal_pos=2, force_grouping=True),
-        component_count=component_count
+        component_count=component_count,
     )
 
 
@@ -23,9 +26,7 @@ def get_supplier_metrics():
     suppliers = Supplier.objects.all()
     supplier_count = len(suppliers) or 0
 
-    return dict(
-        supplier_count=supplier_count
-    )
+    return dict(supplier_count=supplier_count)
 
 
 def get_component_quantity():
@@ -35,9 +36,7 @@ def get_component_quantity():
     values = list()
 
     for date in dates:
-        date_components = Component.objects.filter(
-            created_at__date=date
-        )
+        date_components = Component.objects.filter(created_at__date=date)
         total_quantity = sum(component.quantity or 0 for component in date_components)
         values.append(total_quantity)
 
@@ -61,13 +60,16 @@ def get_component_quantity_per_category():
 
         quantity_per_category[category_id] += component.quantity or 0
 
-    category_names = [category.name for category in categories if category.id in quantity_per_category]
-    values = [quantity_per_category[category.id] for category in categories if category.id in quantity_per_category]
+    category_names = [
+        category.name for category in categories if category.id in quantity_per_category
+    ]
+    values = [
+        quantity_per_category[category.id]
+        for category in categories
+        if category.id in quantity_per_category
+    ]
 
-    return dict(
-        categories=category_names,
-        values=values
-    )
+    return dict(categories=category_names, values=values)
 
 
 def get_low_stock_components(threshold=10):
@@ -76,6 +78,8 @@ def get_low_stock_components(threshold=10):
     except (ValueError, TypeError):
         threshold = 10  # Default to 10 if invalid input
 
-    low_stock_components = Component.objects.filter(quantity__lt=threshold).order_by('quantity')
+    low_stock_components = Component.objects.filter(quantity__lt=threshold).order_by(
+        "quantity"
+    )
 
     return low_stock_components
