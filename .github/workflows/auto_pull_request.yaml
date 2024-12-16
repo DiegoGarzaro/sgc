@@ -37,12 +37,23 @@ jobs:
         if: github.event_name == 'pull_request'
         run: venv/bin/python -m commitizen check --message "${{ github.event.pull_request.title }}"
 
+      - name: Fetch tags
+        run: git fetch --tags --prune --unshallow || git fetch --tags
+
       - name: Bump Version
         run: |
-          if [ -z "$(git log $(git describe --tags --abbrev=0)..HEAD)" ]; then
+          # Try to find the last tag, or use an empty string if none is found
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tags found. Skipping cz bump."
+            exit 0
+          fi
+
+          # Check if there are new commits since LAST_TAG
+          if [ -z "$(git log ${LAST_TAG}..HEAD)" ]; then
             echo "No new commits since last tag. Skipping cz bump."
           else
             echo "VERSION = \"$NEW_VERSION\"" > app/version.py
             venv/bin/cz bump --yes
-            venv/bin/python -m commitizen bump --yes
           fi
