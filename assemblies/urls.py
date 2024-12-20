@@ -4,7 +4,9 @@ from . import views
 
 urlpatterns = [
     path("assemblies/list/", views.AssemblyListView.as_view(), name="assembly_list"),
-    path("assemblies/create/", views.AssemblyCreateView.as_view(), name="assembly_create"),
+    path(
+        "assemblies/create/", views.AssemblyCreateView.as_view(), name="assembly_create"
+    ),
     path(
         "assemblies/<int:pk>/detail/",
         views.AssemblyDetailView.as_view(),

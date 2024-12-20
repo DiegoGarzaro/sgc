@@ -1,10 +1,10 @@
 from django.db import models
 
+from assemblies.models import Assembly
 from brands.models import Brand
 from categories.models import Category
 from packages.models import Package
 from sub_categories.models import SubCategory
-from assemblies.models import Assembly
 
 
 class Component(models.Model):
