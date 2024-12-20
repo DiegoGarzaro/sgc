@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="display-6">Detalhes da Montagem</h3>
+
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">{{ object.name }}</h3>
+
+      <p class="card-text"><strong>Descrição:</strong> {{ object.description|default:"Nenhuma descrição disponível." }}</p>
+
+      <!-- Uncomment these lines if you would like to show creation/update times
+      <p class="card-text"><strong>Criado em:</strong> {{ object.created_at|date:"d/m/Y H:i" }}</p>
+      <p class="card-text"><strong>Atualizado em:</strong> {{ object.updated_at|date:"d/m/Y H:i" }}</p>
+      -->
+    </div>
+  </div>
+
+  <a href="{% url 'assembly_list' %}" class="btn btn-secondary mt-3">Voltar para Lista de Montagens</a>
+</div>
+{% endblock %}

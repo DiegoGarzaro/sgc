@@ -8,6 +8,7 @@
   <div class="card">
     <div class="card-body">
       <h3 class="card-title">{{ object.name }}</h3>
+      <p class="card-text"><strong>Montagem:</strong> {{ object.assembly.name }}</p>
       <p class="card-text">{{ object.description }}</p>
       
       {% if object.image %}

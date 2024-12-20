@@ -6,25 +6,47 @@ SGC - Encapsulamentos
 
 {% block content %}
 
-<div class="row mb-3">
-  <div class="col-md-6">
+{% if perms.packages.add_package %}
+<div class="mb-3 text-end">
+  <a href="{% url 'package_create' %}" class="btn btn-success">
+    <i class="bi bi-plus"></i> Adicionar Encapsulamento
+  </a>
+</div>
+{% endif %}
+
+<div class="card mb-3">
+  <div class="card-header">
+    <strong>Filtros</strong>
+  </div>
+  <div class="card-body">
     <form id="filterForm" method="get" action="{% url 'package_list' %}">
-      <div class="input-group">
-        <input type="text" class="form-control" id="nameFilter" name="name" placeholder="Procurar pelo Nome" value="{{ request.GET.name }}">
-        <button type="submit" class="btn btn-primary d-none" id="submitButton">
-          <i class="bi bi-search"></i>
-        </button>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="nameFilter" class="form-label">Nome</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            name="name" 
+            id="nameFilter" 
+            placeholder="Buscar por nome"
+            value="{{ request.GET.name }}">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="assemblyFilter" class="form-label">Montagem</label>
+          <select class="form-control" id="assemblyFilter" name="assembly">
+            <option value="" {% if not request.GET.assembly %}selected{% endif %}>Todos</option>
+            {% for assembly in assemblies %}
+            <option 
+              value="{{ assembly.id }}" 
+              {% if request.GET.assembly == assembly.id|stringformat:"s" %}selected{% endif %}>
+              {{ assembly.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
     </form>
   </div>
-
-  {% if perms.packages.add_package %}
-  <div class="col-md-6">
-    <a href="{% url 'package_create' %}" class="btn btn-success float-end">
-      <i class="bi bi-plus"></i> Adicionar Encapsulamento
-    </a>
-  </div>
-  {% endif %}
 </div>
 
 <div class="table-responsive d-none d-md-block">
@@ -33,6 +55,7 @@ SGC - Encapsulamentos
       <tr>
         <th>Imagem</th>
         <th>Nome</th>
+        <th>Montagem</th>
         <th>Descrição</th>
         <th class="text-center">Ações</th>
       </tr>
@@ -52,6 +75,7 @@ SGC - Encapsulamentos
             {{ package.name }}
           </a>
         </td>
+        <td>{{ package.assembly.name }}</td>
         <td>{{ package.description|truncatewords:20 }}</td>
         <td class="text-center">
           <div role="group">
@@ -83,18 +107,12 @@ SGC - Encapsulamentos
     {% for package in packages %}
     <div class="card mb-3">
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="card-title">
-            <a href="{% url 'package_detail' package.id %}">
-              {{ package.name }}
-            </a>
-          </h5>
-          {% if package.image %}
-          <img src="{{ package.image.url }}" alt="Package Image" style="width: 50px; height: auto;">
-          {% else %}
-          <i class="bi bi-image" alt="No Image" style="font-size: 2rem;"></i>
-          {% endif %}
-        </div>
+        <h5 class="card-title">
+          <a href="{% url 'package_detail' package.id %}">
+            {{ package.name }}
+          </a>
+        </h5>
+        <p class="card-text"><strong>Montagem:</strong> {{ package.assembly.name }}</p>
         <p class="card-text">{{ package.description|truncatewords:20 }}</p>
         <div class="text-end">
           {% if perms.packages.view_package %}
@@ -123,50 +141,53 @@ SGC - Encapsulamentos
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-      const nameFilterInput = document.getElementById('nameFilter');
-      const filterForm = document.getElementById('filterForm');
-      const packageTableBody = document.getElementById('packageTableBody');
+    const nameFilterInput = document.getElementById('nameFilter');
+    const assemblyFilterSelect = document.getElementById('assemblyFilter');
+    const filterForm = document.getElementById('filterForm');
+    const packageTableBody = document.getElementById('packageTableBody');
 
-      // Function to debounce input events for performance
-      function debounce(func, delay) {
-          let timeout;
-          return function (...args) {
-              clearTimeout(timeout);
-              timeout = setTimeout(() => func.apply(this, args), delay);
-          };
-      }
+    // Function to debounce input events for performance
+    function debounce(func, delay) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
 
-      // Function to dynamically filter table
-      function applyFilter() {
-          const nameFilterValue = nameFilterInput.value;
+    // Function to dynamically filter table
+    function applyFilter() {
+      const nameFilterValue = nameFilterInput.value;
+      const assemblyFilterValue = assemblyFilterSelect.value;
 
-          // Fetch filtered data from the server
-          fetch(`${filterForm.action}?name=${encodeURIComponent(nameFilterValue)}`, {
-              method: 'GET',
-              headers: {
-                  'X-Requested-With': 'XMLHttpRequest',
-              },
-          })
-          .then(response => {
-              if (response.ok) {
-                  return response.text();
-              }
-              throw new Error('Network response was not ok.');
-          })
-          .then(data => {
-              const parser = new DOMParser();
-              const doc = parser.parseFromString(data, 'text/html');
-              const newTableBody = doc.getElementById('packageTableBody');
-              packageTableBody.innerHTML = newTableBody.innerHTML; // Replace table body content
-          })
-          .catch(error => console.error('Error fetching filtered data:', error));
-      }
+      // Fetch filtered data from the server
+      fetch(`${filterForm.action}?name=${encodeURIComponent(nameFilterValue)}&assembly=${encodeURIComponent(assemblyFilterValue)}`, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.text();
+        }
+        throw new Error('Network response was not ok.');
+      })
+      .then(data => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data, 'text/html');
+        const newTableBody = doc.getElementById('packageTableBody');
+        packageTableBody.innerHTML = newTableBody.innerHTML; // Replace table body content
+      })
+      .catch(error => console.error('Error fetching filtered data:', error));
+    }
 
-      // Debounce the filter function to avoid excessive server requests
-      const debouncedFilter = debounce(applyFilter, 300);
+    // Debounce the filter function to avoid excessive server requests
+    const debouncedFilter = debounce(applyFilter, 300);
 
-      // Add event listener to filter dynamically when typing
-      nameFilterInput.addEventListener('input', debouncedFilter);
+    // Add event listeners to filter dynamically when typing or selecting
+    nameFilterInput.addEventListener('input', debouncedFilter);
+    assemblyFilterSelect.addEventListener('change', applyFilter);
   });
 </script>
 

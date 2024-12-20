@@ -47,6 +47,7 @@ urlpatterns = [
     path("login/", views.CustomLoginView.as_view(), name="login"),
     # Home page
     path("", views.home, name="home"),
+    path("", include("assemblies.urls")),
     path("", include("brands.urls")),
     path("", include("categories.urls")),
     path("", include("sub_categories.urls")),

@@ -4,6 +4,7 @@ from brands.models import Brand
 from categories.models import Category
 from packages.models import Package
 from sub_categories.models import SubCategory
+from assemblies.models import Assembly
 
 
 class Component(models.Model):
@@ -14,6 +15,9 @@ class Component(models.Model):
     )
     sub_category = models.ForeignKey(
         SubCategory, on_delete=models.PROTECT, related_name="components"
+    )
+    assembly = models.ForeignKey(
+        Assembly, on_delete=models.PROTECT, related_name="components", null=True
     )
     package = models.ForeignKey(
         Package, on_delete=models.PROTECT, related_name="components"

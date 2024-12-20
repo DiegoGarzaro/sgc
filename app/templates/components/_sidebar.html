@@ -24,6 +24,10 @@
           <li><a href="{% url 'sub_category_list' %}" class="nav-link px-0 align-middle"><i class="bi bi-tags fs-4"></i>
               <span class="ms-1">Sub-Categorias</span></a></li>
           {% endif %}
+          {% if perms.assemblies.view_assembly %}
+          <li><a href="{% url 'assembly_list' %}" class="nav-link px-0 align-middle"><i
+                class="bi bi-boxes fs-4"></i> <span class="ms-1">Montagem</span></a></li>
+          {% endif %}
           {% if perms.packages.view_package %}
           <li><a href="{% url 'package_list' %}" class="nav-link px-0 align-middle"><i
                 class="bi bi-motherboard fs-4"></i> <span class="ms-1">Encapsulamentos</span></a></li>

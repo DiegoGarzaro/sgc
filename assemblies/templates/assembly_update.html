@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="display-6">Editar Montagem</h3>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" id="assemblyForm">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="mb-3">
+          {{ form.name.label_tag }}
+          {{ form.name }}
+          {{ form.name.errors }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.description.label_tag }}
+          {{ form.description }}
+          {{ form.description.errors }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Salvar Montagem</button>
+      </form>
+    </div>
+  </div>
+  
+  <a href="{% url 'assembly_list' %}" class="btn btn-secondary mt-3">Cancelar e Voltar para Lista de Montagens</a>
+</div>
+{% endblock %}
