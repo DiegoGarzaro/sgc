@@ -24,4 +24,5 @@ urlpatterns = [
         views.ComponentDeleteView.as_view(),
         name="component_delete",
     ),
+    path("api/subcategories/", views.subcategories_api, name="subcategories_api"),
 ]

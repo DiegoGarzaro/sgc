@@ -1,10 +1,9 @@
-<!-- components/templates/create_component.html -->
 {% extends 'base.html' %}
 
 {% block content %}
 <div class="container mt-4">
     <h3 class="display-6">Criar Novo Componente</h3>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" id="componentForm">
         {% csrf_token %}
         {{ form.non_field_errors }}
         
@@ -22,7 +21,9 @@
 
         <div class="mb-3">
             {{ form.sub_category.label_tag }}
-            {{ form.sub_category }}
+            <select id="subCategory" name="sub_category" class="form-control">
+                <option value="">Selecione uma categoria primeiro</option>
+            </select>
             {{ form.sub_category.errors }}
         </div>
 
@@ -90,4 +91,40 @@
     </form>
     <a href="{% url 'component_list' %}" class="btn btn-secondary mt-3">Voltar para Lista de Componentes</a>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const categorySelect = document.querySelector('#id_category');
+    const subCategorySelect = document.querySelector('#subCategory');
+
+    categorySelect.addEventListener('change', function () {
+        const categoryId = categorySelect.value;
+
+        // Clear existing options
+        subCategorySelect.innerHTML = '<option value="">Carregando subcategorias...</option>';
+
+        if (categoryId) {
+            // Fetch subcategories for the selected category
+            fetch(`/api/subcategories/?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    subCategorySelect.innerHTML = '<option value="">-</option>';
+                    data.forEach(subCategory => {
+                        const option = document.createElement('option');
+                        option.value = subCategory.id;
+                        option.textContent = subCategory.name;
+                        subCategorySelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar subcategorias:', error);
+                    subCategorySelect.innerHTML = '<option value="">Erro ao carregar subcategorias</option>';
+                });
+        } else {
+            // If no category is selected, show an empty dropdown
+            subCategorySelect.innerHTML = '<option value="">Selecione uma categoria primeiro</option>';
+        }
+    });
+});
+</script>
 {% endblock %}
