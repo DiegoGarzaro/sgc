@@ -1,9 +1,8 @@
 import json
-from django.http import JsonResponse
-from django.core.serializers.json import DjangoJSONEncoder
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -113,10 +112,10 @@ class ComponentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
 
         # Add current subcategory info
         if component.sub_category:
-            context["current_subcategory"] = json.dumps({
-                'id': component.sub_category.id,
-                'name': component.sub_category.name
-            }, cls=DjangoJSONEncoder)
+            context["current_subcategory"] = json.dumps(
+                {"id": component.sub_category.id, "name": component.sub_category.name},
+                cls=DjangoJSONEncoder,
+            )
 
         return context
 
@@ -141,6 +140,8 @@ class ComponentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteVie
 def subcategories_api(request):
     category_id = request.GET.get("category_id")
     if category_id:
-        subcategories = SubCategory.objects.filter(category_id=category_id).values("id", "name")
+        subcategories = SubCategory.objects.filter(category_id=category_id).values(
+            "id", "name"
+        )
         return JsonResponse(list(subcategories), safe=False)
     return JsonResponse([], safe=False)
