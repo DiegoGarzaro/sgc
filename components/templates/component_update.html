@@ -133,19 +133,19 @@
     // Function to fetch and update subcategories
     async function updateSubcategories(categoryId, initialLoad = false) {
       if (!categoryId) {
-        subCategorySelect.innerHTML = '<option value="">Selecione uma categoria primeiro</option>';
+        subCategorySelect.innerHTML = '<option value="">-</option>';
         return;
       }
 
-      subCategorySelect.innerHTML = '<option value="">Carregando subcategorias...</option>';
+      // subCategorySelect.innerHTML = '<option value="">Carregando subcategorias...</option>';
 
       try {
-        const response = await fetch(`/api/subcategories/?category_id=${categoryId}`);
+        const response = await fetch(`/ajax/load-subcategories/?category_id=${categoryId}`);
         if (!response.ok) throw new Error('Network response was not ok');
 
         const subcategories = await response.json();
 
-        subCategorySelect.innerHTML = '<option value="">Selecione uma subcategoria</option>';
+        subCategorySelect.innerHTML = '<option value="">-</option>';
         subcategories.forEach(subcategory => {
           const option = document.createElement('option');
           option.value = subcategory.id;

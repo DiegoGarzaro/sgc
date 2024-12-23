@@ -24,5 +24,9 @@ urlpatterns = [
         views.ComponentDeleteView.as_view(),
         name="component_delete",
     ),
-    path("api/subcategories/", views.subcategories_api, name="subcategories_api"),
+    path(
+        "ajax/load-subcategories/",
+        views.load_subcategories,
+        name="ajax_load_subcategories",
+    ),  # AJAX
 ]

@@ -137,7 +137,8 @@ class ComponentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteVie
     permission_required = "components.delete_component"
 
 
-def subcategories_api(request):
+# Ajax
+def load_subcategories(request):
     category_id = request.GET.get("category_id")
     if category_id:
         subcategories = SubCategory.objects.filter(category_id=category_id).values(
