@@ -27,6 +27,8 @@ jobs:
           venv/bin/python -m pip install commitizen
 
       - name: Bump Version
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
         run: |
           set +e  # Disable errexit to allow non-zero exit codes without stopping the script
 
@@ -43,10 +45,13 @@ jobs:
               echo "$OUTPUT"
               exit $EXIT_CODE
           else
+              echo "$OUTPUT"
               git config user.name "github-actions[bot]"
               git config user.email "github-actions[bot]@users.noreply.github.com"
+
+              NEW_VERSION=$(echo "$OUTPUT" | grep -oP "(?<=bump: version )\d+\.\d+\.\d+")
               git add .
               git commit -m "chore(release): bump version to $NEW_VERSION and update changelog"
               git push origin main --tags
-              echo "Version bumped successfully."
+              echo "Version bumped successfully to $NEW_VERSION."
           fi
