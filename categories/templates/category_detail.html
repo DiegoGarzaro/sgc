@@ -1,17 +1,74 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<div class="container-fluid container-lg mt-4">
+  <!-- Header Section -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <h3 class="display-6 mb-1 text-light">{{ object.name }}</h3>
+      <p class="text-light-emphasis mb-0">Categoria</p>
+    </div>
+    <a href="{% url 'category_list' %}" class="btn btn-outline-light">
+      <i class="fas fa-arrow-left me-2"></i>Voltar para Lista de Categorias
+    </a>
+  </div>
 
-<div class="container mt-4">
-  <h3 class="display-6">Detalhes da Categoria</h3>
+  <!-- Category Details Section -->
+  <div class="row g-4">
+    <!-- Main Info Column -->
+    <div class="col-12 col-lg-8">
+      <div class="card bg-dark text-light border-secondary h-100">
+        <div class="card-header bg-dark-subtle border-secondary">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-info-circle me-2 text-primary"></i>Informações Gerais
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Description -->
+          <div class="mb-4">
+            <label class="text-light-emphasis small d-block mb-2">Descrição</label>
+            <div class="p-3 bg-dark-subtle rounded border border-secondary">
+              {{ object.description|default:"Nenhuma descrição disponível."|linebreaks }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div class="card">
-    <div class="card-body">
-      <h3 class="card-title">{{ object.name }}</h3>
-      <p class="card-text">{{ object.description }}</p>
+    <!-- Stats and Components Card -->
+    <div class="col-12 col-lg-4">
+      <div class="card bg-dark text-light border-secondary h-100">
+        <div class="card-header bg-dark-subtle border-secondary">
+          <h5 class="card-title mb-0 d-flex align-items-center">
+            <i class="fas fa-cube me-2 text-primary"></i> Componentes
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          {% if components %}
+            <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
+              {% for component in components %}
+                <a href="{% url 'component_detail' component.id %}"
+                  class="list-group-item bg-dark text-light border-secondary px-4 py-3 d-flex align-items-center">
+                  <div class="me-3 d-flex align-items-center justify-content-center bg-primary rounded-circle" 
+                    style="width: 10px; height: 10px;">
+                    <i class="fas fa-cube text-dark"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <span class="fw-bold d-block">{{ component.title }}</span>
+                    <small class="text-light-emphasis d-block">{{ component.serie_number|default:"Sem número de série" }}</small>
+                  </div>
+                  <i class="fas fa-chevron-right text-primary"></i>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="p-4 bg-dark-subtle rounded border border-secondary text-center">
+              <p class="mb-0 text-light-emphasis"><i class="fas fa-info-circle me-2"></i>Nenhum componente associado.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
-  <a href="{% url 'category_list' %}" class="btn btn-secondary mt-3">Voltar para Lista de Categorias</a>
 </div>
-
 {% endblock %}

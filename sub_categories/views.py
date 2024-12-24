@@ -8,6 +8,8 @@ from django.views.generic import (
     UpdateView,
 )
 
+from components.models import Component
+
 from . import forms, models
 
 
@@ -40,6 +42,14 @@ class SubCategoryDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailV
     model = models.SubCategory
     template_name = "sub_category_detail.html"
     permission_required = "sub_categories.view_subcategory"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add count of related components
+        context["components_count"] = self.object.components.count()
+        # Add list of related components
+        context["components"] = Component.objects.filter(sub_category=self.object)
+        return context
 
 
 class SubCategoryUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
