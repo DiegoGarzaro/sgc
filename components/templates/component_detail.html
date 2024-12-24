@@ -1,57 +1,182 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
-<div class="container mt-4">
-  <h3 class="display-6">Detalhes do Componente</h3>
-
-  <div class="card">
-    <div class="card-body">
-      <h3 class="card-title">{{ object.title }}</h3>
-      <p class="card-text"><strong>Categoria:</strong> {{ object.category.name }}</p>
-      <p class="card-text"><strong>Sub-Categoria:</strong> {{ object.sub_category.name }}</p>
-      <p class="card-text"><strong>Encapsulamento:</strong> {{ object.package.name }}</p>
-      <p class="card-text"><strong>Marca:</strong> {{ object.brand.name }}</p>
-      <p class="card-text"><strong>Descrição:</strong> {{ object.description }}</p>
-      <p class="card-text"><strong>Localização:</strong> {{ object.location }}</p>
-      
-      <!-- Display Equivalent Components with Hyperlinks -->
-      {% if object.equivalents.exists %}
-        <p class="card-text"><strong>Equivalentes:</strong></p>
-        <ul>
-          {% for equivalent in object.equivalents.all %}
-            <li>
-              <a href="{% url 'component_detail' equivalent.id %}">
-                {{ equivalent.title }} ({{ equivalent.serie_number }})
-              </a>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="card-text"><strong>Equivalentes:</strong> Nenhum equivalente disponível.</p>
-      {% endif %}
-
-      {% if object.datasheet %}
-        <p class="card-text"><strong>Datasheet:</strong> <a href="{{ object.datasheet.url }}" target="_blank">Baixar</a></p>
-      {% else %}
-        <p class="card-text"><strong>Datasheet:</strong> Nenhum datasheet disponível.</p>
-      {% endif %}
-
-      {% if object.image %}
-        <img src="{{ object.image.url }}" class="img-fluid mt-3" alt="{{ object.title }}">
-      {% else %}
-        <p class="text-muted mt-3">Nenhuma imagem disponível.</p>
-      {% endif %}
-
-      <p class="card-text"><strong>Número de Série:</strong> {{ object.serie_number }}</p>
-      <p class="card-text"><strong>Preço:</strong> R$ {{ object.price }}</p>
-      <p class="card-text"><strong>Quantidade:</strong> {{ object.quantity }}</p>
-      <!-- <p class="card-text"><strong>Criado em:</strong> {{ object.created_at|date:"d/m/Y H:i" }}</p>
-      <p class="card-text"><strong>Atualizado em:</strong> {{ object.updated_at|date:"d/m/Y H:i" }}</p> -->
+<div class="container-fluid container-lg mt-4">
+  <!-- Header Section -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <h3 class="display-6 mb-1 text-light">{{ object.title }}</h3>
+      <p class="text-light-emphasis mb-0">Componente</p>
     </div>
+    <a href="{% url 'component_list' %}" class="btn btn-outline-light">
+      <i class="fas fa-arrow-left me-2"></i>Voltar para Lista de Componentes
+    </a>
   </div>
 
-  <a href="{% url 'component_list' %}" class="btn btn-secondary mt-3">Voltar para Lista de Componentes</a>
-</div>
+  <div class="card bg-dark text-light border-secondary">
+    <div class="card-body">
+      <div class="row g-4">
+        <!-- Main Info Column -->
+        <div class="col-12 col-lg-8 order-2 order-lg-1">
+          <!-- <h3 class="card-title h4 mb-4">{{ object.title }}</h3> -->
 
+          <!-- Classification Info -->
+          <div class="card bg-dark-subtle border-secondary mb-4">
+            <div class="card-header bg-dark-subtle border-secondary">
+              <h6 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2 text-primary"></i>Classificação
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row row-cols-1 row-cols-sm-2 g-3">
+                <div class="col">
+                  <div class="mb-2">
+                    <label class="text-light-emphasis small d-block mb-1"><strong>Categoria</strong></label>
+                    <p class="mb-0"><i class="fas fa-tag me-2 text-primary"></i>{{ object.category.name }}</p>
+                  </div>
+                  <div>
+                    <label class="text-light-emphasis small d-block mb-1"><strong>Sub-Categoria</strong></label>
+                    <p class="mb-0"><i class="fas fa-sitemap me-2 text-primary"></i>{{ object.sub_category.name }}</p>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="mb-2">
+                    <label class="text-light-emphasis small d-block mb-1"><strong>Encapsulamento</strong></label>
+                    <p class="mb-0"><i class="fas fa-box me-2 text-primary"></i>{{ object.package.name }}</p>
+                  </div>
+                  <div>
+                    <label class="text-light-emphasis small d-block mb-1"><strong>Marca</strong></label>
+                    <p class="mb-0"><i class="fas fa-industry me-2 text-primary"></i>{{ object.brand.name }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Inventory Info -->
+          <div class="card bg-dark-subtle border-secondary mb-4">
+            <div class="card-header bg-dark-subtle border-secondary">
+              <h6 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2 text-primary"></i>Informações de Estoque
+              </h6>
+            </div>
+            <div class="card-body">
+              <!-- <h6 class="card-subtitle mb-3 text-light-emphasis">Informações de Estoque</h6> -->
+              <div class="row row-cols-1 row-cols-sm-2 g-3">
+                <div class="col">
+                  <div class="mb-2">
+                    <label class="text-light-emphasis small d-block mb-1"><strong>Número de Série</strong></label>
+                    <p class="mb-0"><i class="fas fa-hashtag me-2 text-primary"></i>{{ object.serie_number }}</p>
+                  </div>
+                  <div>
+                    <label class="text-light-emphasis small d-block mb-1"><strong>Localização</strong></label>
+                    <p class="mb-0"><i class="fas fa-map-marker-alt me-2 text-primary"></i>{{ object.location }}</p>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="mb-2">
+                    <label class="text-light-emphasis small d-block mb-1"><strong>Preço</strong></label>
+                    <p class="mb-0"><i class="fas fa-dollar-sign me-2 text-primary"></i>R$ {{ object.price }}</p>
+                  </div>
+                  <div>
+                    <label class="text-light-emphasis small d-block mb-1"><strong>Quantidade em Estoque</strong></label>
+                    <p class="mb-0"><i class="fas fa-boxes me-2 text-primary"></i>{{ object.quantity }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="card bg-dark-subtle border-secondary">
+            <div class="card-header bg-dark-subtle border-secondary">
+              <h6 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2 text-primary"></i>Descrição
+              </h6>
+            </div>
+            <div class="card-body">
+              <!-- <h6 class="card-subtitle mb-3 text-light-emphasis">Descrição</h6> -->
+              <!-- <label class="text-light-emphasis small d-block mb-1">Detalhes do Componente</label> -->
+              <p class="card-text mb-0">{{ object.description }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Media Column -->
+        <div class="col-12 col-lg-4 order-1 order-lg-2">
+          <!-- Component Image -->
+          {% if object.image %}
+          <div class="card bg-dark-subtle border-secondary mb-4">
+            <div class="card-body p-2">
+              <!-- <label class="text-light-emphasis small d-block mb-2">Imagem do Componente</label> -->
+              <img src="{{ object.image.url }}" class="img-fluid rounded" alt="{{ object.title }}">
+              <a href="{{ object.image.url }}" class="btn btn-sm btn-outline-primary w-100 mt-2" target="_blank">
+                <i class="fas fa-expand"></i> Ampliar
+              </a>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Datasheet -->
+          <div class="card bg-dark-subtle border-secondary mb-4">
+            <div class="card-header bg-dark-subtle border-secondary">
+              <h6 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2 text-primary"></i>Documentação Técnica
+              </h6>
+            </div>
+            <div class="card-body">
+              <!-- <h6 class="card-subtitle mb-3 text-light-emphasis">Documentação Técnica</h6> -->
+              {% if object.datasheet %}
+              <!-- <label class="text-light-emphasis small d-block mb-2">Datasheet do Componente</label> -->
+              <a href="{{ object.datasheet.url }}" class="btn btn-outline-info w-100" target="_blank">
+                <i class="fas fa-file-pdf me-2"></i>Baixar Datasheet
+              </a>
+              {% else %}
+              <p class="text-muted text-center mb-0">
+                <i class="fas fa-file-pdf me-2"></i>Datasheet não disponível
+              </p>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Equivalents -->
+          <div class="card bg-dark text-light border-secondary">
+            <div class="card-header bg-dark-subtle border-secondary">
+              <h6 class="card-title mb-0 d-flex align-items-center">
+                <i class="fas fa-cube me-2 text-primary"></i> Componentes Equivalentes
+              </h6>
+            </div>
+            <div class="card-body p-0">
+              {% if object.equivalents.exists %}
+              <div class="list-group list-group-flush" style="max-height: 100px; overflow-y: auto;">
+                {% for equivalent in object.equivalents.all %}
+                <a href="{% url 'component_detail' equivalent.id %}"
+                  class="list-group-item bg-dark text-light border-secondary px-4 py-3 d-flex align-items-center">
+                  <div class="me-3 d-flex align-items-center justify-content-center bg-primary rounded-circle"
+                    style="width: 10px; height: 10px;">
+                    <i class="fas fa-cube text-dark"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <span class="fw-bold d-block">{{ equivalent.title }}</span>
+                    <small class="text-light-emphasis d-block">
+                      {{ equivalent.serie_number|default:"Sem número de série" }}
+                    </small>
+                  </div>
+                  <i class="fas fa-chevron-right text-primary"></i>
+                </a>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="p-4 bg-dark-subtle rounded border border-secondary text-center">
+                <p class="mb-0 text-light-emphasis"><i class="fas fa-info-circle me-2"></i>Sem equivalentes disponíveis.
+                </p>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

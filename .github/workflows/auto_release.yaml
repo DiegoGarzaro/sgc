@@ -26,27 +26,38 @@ jobs:
           venv/bin/python -m pip install --upgrade pip
           venv/bin/python -m pip install commitizen
 
-      - name: Bump Version
-        run: |
-          set +e  # Disable errexit to allow non-zero exit codes without stopping the script
+      # - name: Bump Version
+      #   env:
+      #     NEW_VERSION: ${{ steps.bump.outputs.version }}
+      #   run: |
+      #     set +e  # Disable errexit to allow non-zero exit codes without stopping the script
 
-          OUTPUT=$(venv/bin/cz bump --yes 2>&1)
-          EXIT_CODE=$?
+      #     OUTPUT=$(venv/bin/cz bump --yes 2>&1)
+      #     EXIT_CODE=$?
 
-          set -e  # Re-enable errexit now that we have captured the exit code
+      #     set -e  # Re-enable errexit now that we have captured the exit code
 
-          if [[ "$OUTPUT" == *"[NO_COMMITS_TO_BUMP]"* ]]; then
-              echo "No commits eligible for bump. Exiting without error."
-              exit 0
-          elif [ $EXIT_CODE -ne 0 ]; then
-              echo "An unexpected error occurred during cz bump."
-              echo "$OUTPUT"
-              exit $EXIT_CODE
-          else
-              git config user.name "github-actions[bot]"
-              git config user.email "github-actions[bot]@users.noreply.github.com"
-              git add .
-              git commit -m "chore(release): bump version to $NEW_VERSION and update changelog"
-              git push origin main --tags
-              echo "Version bumped successfully."
-          fi
+      #     if [[ "$OUTPUT" == *"[NO_COMMITS_TO_BUMP]"* ]]; then
+      #         echo "No commits eligible for bump. Exiting without error."
+      #         exit 0
+      #     elif [ $EXIT_CODE -ne 0 ]; then
+      #         echo "An unexpected error occurred during cz bump."
+      #         echo "$OUTPUT"
+      #         exit $EXIT_CODE
+      #     else
+      #         echo "$OUTPUT"
+      #         git config user.name "github-actions[bot]"
+      #         git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      #         NEW_VERSION=$(echo "$OUTPUT" | grep -oP "(?<=bump: version )\d+\.\d+\.\d+")
+      #         git add .
+      #         git commit -m "chore(release): bump version to $NEW_VERSION and update changelog"
+      #         git push origin main --tags
+      #         echo "Version bumped successfully to $NEW_VERSION."
+      #     fi
+
+      - id: cz
+        name: Create bump and changelog
+        uses: commitizen-tools/commitizen-action@main
+      - name: Print Version
+        run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
