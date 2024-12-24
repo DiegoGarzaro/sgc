@@ -27,7 +27,9 @@ SGC - Componentes
           <div class="col-md-6">
             <h4 id="previewTitle"></h4>
             <p><strong>Categoria:</strong> <span id="previewCategory"></span></p>
-            <p><strong>Subcategoria:</strong> <span id="previewSubCategory"></span></p>
+            <p><strong>Subcategoria:</strong> <span id="previewSubCategory"></span></p>            <p><strong>Subcategoria:</strong> <span id="previewSubCategory"></span></p>
+            <p><strong>Montagem:</strong> <span id="previewAssembly"></span></p>
+            <p><strong>Encapsulamento:</strong> <span id="previewPackage"></span></p>            
             <p><strong>Descrição:</strong> <span id="previewDescription"></span></p>
             <p><strong>Preço:</strong> R$ <span id="previewPrice"></span></p>
             <p><strong>Quantidade:</strong> <span id="previewQuantity"></span></p>
@@ -125,6 +127,7 @@ SGC - Componentes
         </th>
         <th>Categoria</th>
         <th>Subcategoria</th>
+        <th>Montagem</th>
         <th>Descrição</th>
         <th>Preço (BRL)</th>
         <th>
@@ -156,7 +159,9 @@ SGC - Componentes
              class="text-info preview-trigger"
              data-title="{{ component.title }}"
              data-category="{{ component.category.name }}"
-             data-subcategory="{{ component.sub_category.name }}"
+             data-subcategory="{{ component.category.sub_category.name }}"
+             data-assembly="{{ component.assembly.name }}"
+             data-package="{{ component.assembly.package.name }}"
              data-description="{{ component.description }}"
              data-price="{{ component.price|default:'0.00' }}"
              data-quantity="{{ component.quantity }}"
@@ -166,7 +171,8 @@ SGC - Componentes
           </a>
         </td>
         <td>{{ component.category.name }}</td>
-        <td>{{ component.sub_category.name }}</td>
+        <td>{{ component.category.sub_category.name }}</td>
+        <td>{{ component.assembly.name }}</td>
         <td>{{ component.description }}</td>
         <td>R$ {{ component.price|default:"0.00" }}</td>
         <td>{{ component.quantity }}</td>
@@ -219,7 +225,8 @@ SGC - Componentes
           {% endif %}
         </div>
         <p class="card-text"><strong>Categoria:</strong> {{ component.category.name }}</p>
-        <p class="card-text"><strong>Subcategoria:</strong> {{ component.sub_category.name }}</p>
+        <p class="card-text"><strong>Subcategoria:</strong> {{ component.category.sub_category.name }}</p>
+        <p class="card-text"><strong>Montagem:</strong> {{ component.assembly.name }}</p>
         <p class="card-text"><strong>Descrição:</strong> {{ component.description }}</p>
         <p class="card-text"><strong>Preço:</strong> R$ {{ component.price|default:"0.00" }}</p>
         <p class="card-text"><strong>Quantidade:</strong> {{ component.quantity }}</p>
@@ -315,6 +322,8 @@ SGC - Componentes
       document.getElementById('previewTitle').textContent = trigger.dataset.title;
       document.getElementById('previewCategory').textContent = trigger.dataset.category;
       document.getElementById('previewSubCategory').textContent = trigger.dataset.subcategory;
+      document.getElementById('previewAssembly').textContent = trigger.dataset.assembly;
+      document.getElementById('previewPackage').textContent = trigger.dataset.package;
       document.getElementById('previewDescription').textContent = trigger.dataset.description;
       document.getElementById('previewPrice').textContent = trigger.dataset.price;
       document.getElementById('previewQuantity').textContent = trigger.dataset.quantity;

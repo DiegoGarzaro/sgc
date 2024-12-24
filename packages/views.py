@@ -21,11 +21,19 @@ class PackageListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         name = self.request.GET.get("name")
+        assembly = self.request.GET.get("assembly")
 
         if name:
             queryset = queryset.filter(name__icontains=name)
+        if assembly:
+            queryset = queryset.filter(assembly_id=assembly)
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["assemblies"] = models.Assembly.objects.all()
+        return context
 
 
 class PackageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):

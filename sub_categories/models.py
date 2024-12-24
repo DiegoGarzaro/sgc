@@ -6,7 +6,7 @@ from categories.models import Category  # Import the Category model
 class SubCategory(models.Model):
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="subcategories",
         null=True,
         blank=True,
