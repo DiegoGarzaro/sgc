@@ -4,6 +4,9 @@ version = "1.0.0"                 # Current version
 tag_format = "v$version"         # Git tag format
 update_changelog = true           # Auto-update changelog
 changelog_file = "CHANGELOG.md"   # Path to the changelog file
+version_files = [
+    "app/__version__.py",
+]
 
 [tool.black]
 line-length = 88                  # Maximum line length for formatting
