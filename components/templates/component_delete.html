@@ -14,7 +14,7 @@
         <button type="submit" class="btn btn-danger mt-3">Deletar</button>
       </form>
       
-      <a href="{% url 'component_list' %}" class="btn btn-secondary mt-3">Cancelar e Voltar para Lista de Componentes</a>
+      <a href="{% url 'component_list' %}?{{ request.GET.urlencode }}" class="btn btn-secondary mt-3">Cancelar e Voltar para Lista de Componentes</a>
     </div>
   </div>
 </div>

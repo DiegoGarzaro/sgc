@@ -1,9 +1,10 @@
 import json
+from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -13,9 +14,45 @@ from django.views.generic import (
 )
 
 from app import metrics
+from django.db.models import Q
 
 from .forms import ComponentForm
 from .models import Brand, Category, Component, SubCategory
+
+
+class FilterStateMixin:
+    """Mixin to handle filter state persistence"""
+    
+    def get_success_url(self):
+        # Get the base success URL
+        url = reverse('component_list')
+        
+        # Get all filter parameters from the request
+        filter_params = {}
+        filter_fields = self.request.GET.getlist('filterField[]', [])
+        filter_lookups = self.request.GET.getlist('filterLookup[]', [])
+        filter_values = self.request.GET.getlist('filterValue[]', [])
+        
+        # Add them to the parameters if they exist
+        if filter_fields:
+            filter_params['filterField[]'] = filter_fields
+        if filter_lookups:
+            filter_params['filterLookup[]'] = filter_lookups
+        if filter_values:
+            filter_params['filterValue[]'] = filter_values
+            
+        # Add sorting parameters if they exist
+        sort = self.request.GET.get('sort')
+        order = self.request.GET.get('order')
+        if sort:
+            filter_params['sort'] = sort
+        if order:
+            filter_params['order'] = order
+            
+        # If we have any parameters, add them to the URL
+        if filter_params:
+            return f"{url}?{urlencode(filter_params, doseq=True)}"
+        return url
 
 
 class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -27,29 +64,22 @@ class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        dynamic_filter = Q()
 
-        # Get filter parameters
-        title = self.request.GET.get("title")
-        category = self.request.GET.get("category")
-        sub_category = self.request.GET.get("sub_category")
-        brand = self.request.GET.get("brand")
+        fields = self.request.GET.getlist("filterField[]")
+        lookups = self.request.GET.getlist("filterLookup[]")
+        values = self.request.GET.getlist("filterValue[]")
 
-        # Get sorting parameters
-        sort_by = self.request.GET.get("sort", "title")  # Default to title
+        for field, lookup, value in zip(fields, lookups, values):
+            if field and lookup and value:
+                filter_expression = f"{field}__{lookup}"
+                dynamic_filter &= Q(**{filter_expression: value})
+
+        queryset = queryset.filter(dynamic_filter)
+
+        sort_by = self.request.GET.get("sort", "title")
         direction = self.request.GET.get("order", "asc")
-
-        # Apply filters
-        if title:
-            queryset = queryset.filter(title__icontains=title)
-        if category:
-            queryset = queryset.filter(category__id=category)
-        if sub_category:
-            queryset = queryset.filter(sub_category__id=sub_category)
-        if brand:
-            queryset = queryset.filter(brand__id=brand)
-
-        # Apply sorting
-        if sort_by in ["title", "quantity"]:  # Add valid sort fields here
+        if sort_by in ["title", "quantity"]:
             if direction == "desc":
                 sort_by = f"-{sort_by}"
             queryset = queryset.order_by(sort_by)
@@ -62,19 +92,22 @@ class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context["categories"] = Category.objects.all()
         context["sub_categories"] = SubCategory.objects.all()
         context["brands"] = Brand.objects.all()
-
-        # Add sorting parameters to context
         context["current_sort"] = self.request.GET.get("sort", "title")
         context["current_order"] = self.request.GET.get("order", "asc")
-
+        
+        # Add filter state to context
+        context["filter_state"] = {
+            'fields': self.request.GET.getlist("filterField[]"),
+            'lookups': self.request.GET.getlist("filterLookup[]"),
+            'values': self.request.GET.getlist("filterValue[]")
+        }
         return context
 
 
-class ComponentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class ComponentCreateView(LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, CreateView):
     model = Component
     template_name = "component_create.html"
     form_class = ComponentForm
-    success_url = reverse_lazy("component_list")
     permission_required = "components.add_component"
 
 
@@ -84,33 +117,39 @@ class ComponentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVie
     context_object_name = "component"
     permission_required = "components.view_component"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add filter parameters to context for back button
+        context['filter_params'] = urlencode(self.request.GET, doseq=True)
+        return context
 
-class ComponentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+
+class ComponentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, UpdateView):
     model = Component
     template_name = "component_update.html"
     form_class = ComponentForm
-    success_url = reverse_lazy("component_list")
     permission_required = "components.change_component"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        component = self.object  # The component being edited
+        component = self.object
 
-        # All components excluding the current one
+        # Add filter parameters to context
+        context['filter_params'] = urlencode(self.request.GET, doseq=True)
+
+        # Existing context data
         all_components = Component.objects.exclude(id=component.id)
         context["all_components_json"] = json.dumps(
             list(all_components.values("id", "title", "serie_number")),
             cls=DjangoJSONEncoder,
         )
 
-        # Existing equivalents for preloading
         equivalent_components = component.equivalents.all()
         context["existing_equivalents_json"] = json.dumps(
             list(equivalent_components.values("id", "title", "serie_number")),
             cls=DjangoJSONEncoder,
         )
 
-        # Add current subcategory info
         if component.sub_category:
             context["current_subcategory"] = json.dumps(
                 {"id": component.sub_category.id, "name": component.sub_category.name},
@@ -121,23 +160,24 @@ class ComponentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
 
     def form_valid(self, form):
         response = super().form_valid(form)
-
-        # Process the equivalent components from the POST request
         equivalent_ids = self.request.POST.getlist("equivalent[]")
         equivalents = Component.objects.filter(id__in=equivalent_ids)
         self.object.equivalents.set(equivalents)
-
         return response
 
 
-class ComponentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class ComponentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, DeleteView):
     model = Component
     template_name = "component_delete.html"
-    success_url = reverse_lazy("component_list")
     permission_required = "components.delete_component"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add filter parameters to context for cancel button
+        context['filter_params'] = urlencode(self.request.GET, doseq=True)
+        return context
 
-# Ajax
+
 def load_subcategories(request):
     category_id = request.GET.get("category_id")
     if category_id:
