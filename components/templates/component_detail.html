@@ -8,8 +8,8 @@
       <h3 class="display-6 mb-1 text-light">{{ object.title }}</h3>
       <p class="text-light-emphasis mb-0">Componente</p>
     </div>
-    <a href="{% url 'component_list' %}" class="btn btn-outline-light">
-      <i class="fas fa-arrow-left me-2"></i>Voltar para Lista de Componentes
+    <a href="{% url 'component_list' %}?{{ request.GET.urlencode }}" class="btn btn-outline-light">
+      <i class="fas fa-arrow-left me-2"></i> Voltar para Lista de Componentes
     </a>
   </div>
 
