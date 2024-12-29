@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Q
 from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -14,7 +15,6 @@ from django.views.generic import (
 )
 
 from app import metrics
-from django.db.models import Q
 
 from .forms import ComponentForm
 from .models import Brand, Category, Component, SubCategory
@@ -22,33 +22,33 @@ from .models import Brand, Category, Component, SubCategory
 
 class FilterStateMixin:
     """Mixin to handle filter state persistence"""
-    
+
     def get_success_url(self):
         # Get the base success URL
-        url = reverse('component_list')
-        
+        url = reverse("component_list")
+
         # Get all filter parameters from the request
         filter_params = {}
-        filter_fields = self.request.GET.getlist('filterField[]', [])
-        filter_lookups = self.request.GET.getlist('filterLookup[]', [])
-        filter_values = self.request.GET.getlist('filterValue[]', [])
-        
+        filter_fields = self.request.GET.getlist("filterField[]", [])
+        filter_lookups = self.request.GET.getlist("filterLookup[]", [])
+        filter_values = self.request.GET.getlist("filterValue[]", [])
+
         # Add them to the parameters if they exist
         if filter_fields:
-            filter_params['filterField[]'] = filter_fields
+            filter_params["filterField[]"] = filter_fields
         if filter_lookups:
-            filter_params['filterLookup[]'] = filter_lookups
+            filter_params["filterLookup[]"] = filter_lookups
         if filter_values:
-            filter_params['filterValue[]'] = filter_values
-            
+            filter_params["filterValue[]"] = filter_values
+
         # Add sorting parameters if they exist
-        sort = self.request.GET.get('sort')
-        order = self.request.GET.get('order')
+        sort = self.request.GET.get("sort")
+        order = self.request.GET.get("order")
         if sort:
-            filter_params['sort'] = sort
+            filter_params["sort"] = sort
         if order:
-            filter_params['order'] = order
-            
+            filter_params["order"] = order
+
         # If we have any parameters, add them to the URL
         if filter_params:
             return f"{url}?{urlencode(filter_params, doseq=True)}"
@@ -94,17 +94,19 @@ class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context["brands"] = Brand.objects.all()
         context["current_sort"] = self.request.GET.get("sort", "title")
         context["current_order"] = self.request.GET.get("order", "asc")
-        
+
         # Add filter state to context
         context["filter_state"] = {
-            'fields': self.request.GET.getlist("filterField[]"),
-            'lookups': self.request.GET.getlist("filterLookup[]"),
-            'values': self.request.GET.getlist("filterValue[]")
+            "fields": self.request.GET.getlist("filterField[]"),
+            "lookups": self.request.GET.getlist("filterLookup[]"),
+            "values": self.request.GET.getlist("filterValue[]"),
         }
         return context
 
 
-class ComponentCreateView(LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, CreateView):
+class ComponentCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, CreateView
+):
     model = Component
     template_name = "component_create.html"
     form_class = ComponentForm
@@ -120,11 +122,13 @@ class ComponentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVie
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Add filter parameters to context for back button
-        context['filter_params'] = urlencode(self.request.GET, doseq=True)
+        context["filter_params"] = urlencode(self.request.GET, doseq=True)
         return context
 
 
-class ComponentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, UpdateView):
+class ComponentUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, UpdateView
+):
     model = Component
     template_name = "component_update.html"
     form_class = ComponentForm
@@ -135,7 +139,7 @@ class ComponentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, FilterSta
         component = self.object
 
         # Add filter parameters to context
-        context['filter_params'] = urlencode(self.request.GET, doseq=True)
+        context["filter_params"] = urlencode(self.request.GET, doseq=True)
 
         # Existing context data
         all_components = Component.objects.exclude(id=component.id)
@@ -166,7 +170,9 @@ class ComponentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, FilterSta
         return response
 
 
-class ComponentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, DeleteView):
+class ComponentDeleteView(
+    LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, DeleteView
+):
     model = Component
     template_name = "component_delete.html"
     permission_required = "components.delete_component"
@@ -174,7 +180,7 @@ class ComponentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, FilterSta
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Add filter parameters to context for cancel button
-        context['filter_params'] = urlencode(self.request.GET, doseq=True)
+        context["filter_params"] = urlencode(self.request.GET, doseq=True)
         return context
 
 
