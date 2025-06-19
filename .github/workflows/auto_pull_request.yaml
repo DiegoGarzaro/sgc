@@ -32,6 +32,9 @@ jobs:
       - name: Check Import Sorting with Isort
         run: venv/bin/isort --check .
 
+      - name: Run unit tests
+        run: venv/bin/python manage.py test
+
       # Validate the PR title (for squash merges)
       - name: Validate Pull Request Title
         if: github.event_name == 'pull_request'
