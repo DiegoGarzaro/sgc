@@ -1,14 +1,16 @@
+{% load querystring_tags %}
 {% if page_obj.has_other_pages %}
+  {% pagination_query as extra_query %}
   <nav>
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page=1">
+          <a class="page-link" href="?page=1{{ extra_query }}">
             Primeira
           </a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ extra_query }}">
             Anterior
           </a>
         </li>
@@ -18,13 +20,13 @@
         {% if page_number <= page_obj.number|add:3 and page_number >= page_obj.number|add:-3 %}
           {% if page_obj.number == page_number %}
             <li class="page-item active">
-              <a class="page-link" href="?page={{ page_number }}">
+              <a class="page-link" href="?page={{ page_number }}{{ extra_query }}">
                 {{ page_number }}
               </a>
             </li>
           {% else %}
             <li class="page-item">
-              <a class="page-link" href="?page={{ page_number }}">
+              <a class="page-link" href="?page={{ page_number }}{{ extra_query }}">
                 {{ page_number }}
               </a>
             </li>
@@ -34,12 +36,12 @@
 
       {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ extra_query }}">
             Próxima
           </a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{{ extra_query }}">
             Última
           </a>
         </li>
