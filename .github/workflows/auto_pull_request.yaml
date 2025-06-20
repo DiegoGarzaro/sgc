@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Install Python
         uses: actions/setup-python@v4
@@ -24,7 +26,8 @@ jobs:
       - name: Install dependencies
         run: |
           venv/bin/python -m pip install --upgrade pip
-          venv/bin/python -m pip install -r requirements_dev.txt black isort commitizen
+          venv/bin/python -m pip install -r requirements_dev.txt
+          venv/bin/python -m pip install -r requirements.txt
 
       - name: Check Code Formatting with Black
         run: venv/bin/black --check .
@@ -32,7 +35,27 @@ jobs:
       - name: Check Import Sorting with Isort
         run: venv/bin/isort --check .
 
+      - name: Run unit tests
+        env:
+          SECRET_KEY: ${{ secrets.SGC_DJANGO_SECRET_KEY }}
+          SOCIAL_AUTH_GOOGLE_OAUTH2_KEY: ${{ secrets.SGC_SOCIAL_AUTH_GOOGLE_OAUTH2_KEY }}
+          SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET: ${{ secrets.SGC_SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET }}
+        run: venv/bin/python manage.py test
+
       # Validate the PR title (for squash merges)
       - name: Validate Pull Request Title
         if: github.event_name == 'pull_request'
         run: venv/bin/python -m commitizen check --message "${{ github.event.pull_request.title }}"
+
+      - name: Create bump and changelog
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          changelog_increment_filename: CHANGELOG.md
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: "body.md"
+          tag_name: "v${{ env.REVISION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
