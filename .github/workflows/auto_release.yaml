@@ -16,6 +16,10 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Remove invalid tags
+        run: |
+          git tag --list | grep -v '^v' | xargs -r git tag -d
+
       - name: Install Python
         uses: actions/setup-python@v4
         with:
