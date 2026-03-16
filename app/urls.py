@@ -53,4 +53,5 @@ urlpatterns = [
     path("", include("packages.urls")),
     path("", include("suppliers.urls")),
     path("", include("components.urls")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+]

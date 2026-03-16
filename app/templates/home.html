@@ -1,144 +1,181 @@
 {% extends 'base.html' %}
 
-{% block title %}
-Home - SGC Componentes
-{% endblock %}
+{% block title %}Dashboard — SGC{% endblock %}
 
 {% block content %}
 
 {% if perms.components.view_component %}
 
-<!-- Inclui as métricas dos componentes -->
+<!-- Page Header -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+  <div>
+    <h4 class="fw-bold mb-1">Bem-vindo, {{ user.username }}</h4>
+    <p class="text-secondary small mb-0">Visão geral do seu inventário de componentes eletrônicos.</p>
+  </div>
+  <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2">
+    <i class="bi bi-calendar3 me-1"></i>{% now "d \d\e N \d\e Y" %}
+  </span>
+</div>
+
+<!-- Metric Cards -->
 {% include 'components/_component_metrics.html' %}
 
-<!-- Seção dos componentes com estoque baixo -->
-<div class="row mt-4">
+<!-- Main Content Grid -->
+<div class="row g-4">
+
+  <!-- Activity Chart -->
+  <div class="col-lg-7">
+    <div class="card border-0 h-100">
+      <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 px-4 pt-4 pb-3">
+        <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+          <i class="bi bi-graph-up text-primary"></i>
+          Atividade Recente
+        </h5>
+        <p class="text-secondary small mb-0 mt-1">Componentes adicionados nos últimos 7 dias</p>
+      </div>
+      <div class="card-body px-4 pb-4 pt-3">
+        <canvas id="componentUsage7days" style="max-height: 260px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Distribution -->
+  <div class="col-lg-5">
+    <div class="card border-0 h-100">
+      <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 px-4 pt-4 pb-3">
+        <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+          <i class="bi bi-pie-chart text-warning"></i>
+          Por Categoria
+        </h5>
+        <p class="text-secondary small mb-0 mt-1">Distribuição de unidades por categoria</p>
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center px-4 pb-4 pt-3">
+        <canvas id="componentQuantityPerCategory" style="max-height: 260px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Stock Alert -->
   <div class="col-12" id="low-stock-widget">
     {% include 'components/_low_stock_components.html' %}
   </div>
+
 </div>
 
-<!-- Inclui o Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const gridColor  = "rgba(255,255,255,0.06)";
+  const textColor  = "#8a9099";
 
-<!-- Seção dos gráficos -->
-<div class="row mt-4 justify-content-center">
-  <div class="col-lg-6 col-md-12 text-center mb-4">
-    <h5 class="text-center mb-3">Quantidade de Componentes (Últimos 7 dias)</h5>
-    <canvas id="componentUsage7days"></canvas>
-  </div>
-  <div class="col-lg-6 col-md-12 text-center mb-4">
-    <h5 class="text-center mb-3">Quantidade de Componentes por Categorias</h5>
-    <canvas id="componentQuantityPerCategory"></canvas>
-  </div>
+  Chart.defaults.color       = textColor;
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+  Chart.defaults.font.size   = 12;
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      // Parse chart data
-      var componentUsage7days = JSON.parse('{{ component_quantity|escapejs }}');
-      var componentQuantityPerCategory = JSON.parse('{{ component_quantity_per_category|escapejs }}');
+  const usageData   = JSON.parse('{{ component_quantity|escapejs }}');
+  const categoryData = JSON.parse('{{ component_quantity_per_category|escapejs }}');
 
-      // Gráfico de Uso de Componentes nos Últimos 7 Dias
-      var ctxComponentUsage = document.getElementById('componentUsage7days').getContext('2d');
-      new Chart(ctxComponentUsage, {
-        type: 'line',
-        data: {
-          labels: componentUsage7days.dates,
-          datasets: [{
-            label: 'Quantidade de Componentes',
-            data: componentUsage7days.values,
-            fill: true,
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2,
-            tension: 0.4
-          }]
+  /* ── Line chart ─────────────────────────────────────────── */
+  new Chart(document.getElementById("componentUsage7days"), {
+    type: "line",
+    data: {
+      labels: usageData.dates.map(d =>
+        new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+      ),
+      datasets: [{
+        label: "Componentes adicionados",
+        data: usageData.values,
+        fill: true,
+        backgroundColor: "rgba(13,110,253,0.08)",
+        borderColor: "#0d6efd",
+        borderWidth: 2,
+        pointBackgroundColor: "#0d6efd",
+        pointBorderColor: "#1e1e1e",
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { stepSize: 1, precision: 0 },
+          border: { display: false }
         },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Uso de Componentes nos Últimos 7 Dias'
-            },
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
+        x: {
+          grid: { display: false },
+          border: { display: false }
         }
-      });
-
-      // Gráfico de Quantidade de Componentes por Categoria
-      var ctxComponentPerCategory = document.getElementById('componentQuantityPerCategory').getContext('2d');
-      new Chart(ctxComponentPerCategory, {
-        type: 'bar',
-        data: {
-          labels: componentQuantityPerCategory.categories,
-          datasets: [{
-            label: 'Quantidade de Componentes',
-            data: componentQuantityPerCategory.values,
-            backgroundColor: 'rgba(255, 99, 132, 0.6)',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Componentes por Categoria'
-            },
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-
-
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-      const lowStockWidget = document.getElementById('low-stock-widget');
-
-      function updateLowStockWidget() {
-        const form = document.getElementById('low-stock-filter-form');
-        const formData = new FormData(form);
-        const params = new URLSearchParams(formData).toString();
-
-        fetch(window.location.pathname + '?' + params, {
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-          .then(response => response.json())
-          .then(data => {
-            lowStockWidget.innerHTML = data.html;
-            activateTooltips();
-            // No need to reattach listeners here because of event delegation
-          })
-          .catch(error => console.error('Error:', error));
       }
+    }
+  });
 
-      lowStockWidget.addEventListener('change', function (e) {
-        if (e.target && e.target.id === 'low_stock_threshold') {
-          updateLowStockWidget();
+  /* ── Doughnut chart ──────────────────────────────────────── */
+  const palette = ["#0d6efd","#198754","#ffc107","#0dcaf0","#6610f2","#fd7e14","#d63384","#20c997"];
+  new Chart(document.getElementById("componentQuantityPerCategory"), {
+    type: "doughnut",
+    data: {
+      labels: categoryData.categories,
+      datasets: [{
+        data: categoryData.values,
+        backgroundColor: palette,
+        borderWidth: 2,
+        borderColor: "#1e1e1e",
+        hoverOffset: 10
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: "65%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            padding: 16,
+            usePointStyle: true,
+            pointStyle: "circle",
+            font: { size: 11 }
+          }
         }
-      });
+      }
+    }
+  });
 
-      activateTooltips();
-    });
-  </script>
+  /* ── Low-stock AJAX refresh ──────────────────────────────── */
+  const widget = document.getElementById("low-stock-widget");
+  widget.addEventListener("change", function (e) {
+    if (e.target && e.target.id === "low_stock_threshold") {
+      const params = new URLSearchParams(
+        new FormData(document.getElementById("low-stock-filter-form"))
+      ).toString();
+      fetch(window.location.pathname + "?" + params, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      })
+        .then(r => r.json())
+        .then(d => { widget.innerHTML = d.html; })
+        .catch(console.error);
+    }
+  });
+});
+</script>
 
-  {% else %}
-  <div class="alert alert-warning" role="alert">
-    Você não tem permissão para visualizar as métricas.
+{% else %}
+
+<div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+  <div class="text-center">
+    <i class="bi bi-shield-lock text-warning mb-3 d-block" style="font-size: 4rem;"></i>
+    <h4 class="fw-bold mb-2">Acesso Restrito</h4>
+    <p class="text-secondary mb-0">Você não tem permissão para visualizar as métricas.<br>Entre em contato com um administrador.</p>
   </div>
-  {% endif %}
+</div>
 
-  {% endblock %}
+{% endif %}
+
+{% endblock %}

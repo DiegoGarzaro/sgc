@@ -1,5 +1,4 @@
 import json
-from typing import Union
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -12,7 +11,7 @@ from . import metrics
 
 
 @login_required(login_url="login")
-def home(request: HttpRequest) -> Union[HttpResponse, JsonResponse]:
+def home(request: HttpRequest) -> HttpResponse | JsonResponse:
     # List of standard thresholds with type hint
     standard_thresholds: list[int] = [5, 10, 15, 20, 25, 50]
 
@@ -35,7 +34,7 @@ def home(request: HttpRequest) -> Union[HttpResponse, JsonResponse]:
         )
     except Exception as e:
         # Log the error or handle it appropriately
-        messages.error(request, f"Error retrieving metrics: {str(e)}")
+        messages.error(request, f"Error retrieving metrics: {e!s}")
         component_metrics = {}
         component_quantity = {}
         component_quantity_per_category = {}

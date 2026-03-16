@@ -31,6 +31,7 @@ SGC - Componentes
             <p><strong>Descrição:</strong> <span id="previewDescription"></span></p>
             <p><strong>Preço:</strong> R$ <span id="previewPrice"></span></p>
             <p><strong>Quantidade:</strong> <span id="previewQuantity"></span></p>
+            <p><strong>Valor Total:</strong> R$ <span id="previewTotalValue"></span></p>
           </div>
         </div>
       </div>
@@ -121,28 +122,30 @@ SGC - Componentes
             </div>
           </div>
         </th>
+        <th>Valor Total (BRL)</th>
         <th class="text-center">Ações</th>
       </tr>
     </thead>
-    <tbody id="componentTableBody">
+    <tbody>
       {% for component in components %}
       <tr>
         <td class="text-center">
           {% if component.image %}
-          <img src="{{ component.image.url }}" alt="Imagem do Componente" style="width: 50px; height: auto;">
+          <img src="{{ component.image.url }}" alt="Imagem do Componente" class="img-thumbnail"
+            style="width: 50px; height: auto;">
           {% else %}
           <i class="bi bi-image" style="font-size: 1.5rem;"></i>
           {% endif %}
         </td>
         <td>
-          <a href="{% url 'component_detail' component.id %}?{{ request.GET.urlencode }}"
-             class="text-info preview-trigger"
+          <a href="#" class="text-info preview-component" data-bs-toggle="modal" data-bs-target="#previewModal"
              data-title="{{ component.title }}"
              data-category="{{ component.category.name }}"
              data-subcategory="{{ component.sub_category.name }}"
              data-description="{{ component.description }}"
              data-price="{{ component.price|default:'0.00' }}"
              data-quantity="{{ component.quantity }}"
+             data-total-value="{{ component.total_value|default:'0.00' }}"
              {% if component.image %}data-image="{{ component.image.url }}"{% endif %}
              data-detail-url="{% url 'component_detail' component.id %}?{{ request.GET.urlencode }}">
             {{ component.title }}
@@ -153,6 +156,7 @@ SGC - Componentes
         <td>{{ component.description }}</td>
         <td>R$ {{ component.price|default:"0.00" }}</td>
         <td>{{ component.quantity }}</td>
+        <td>R$ {{ component.total_value|default:"0.00" }}</td>
         <td class="text-center">
           <div role="group">
             {% if perms.components.view_component %}
@@ -176,7 +180,7 @@ SGC - Componentes
       {% endfor %}
       {% if components|length == 0 %}
       <tr>
-        <td colspan="8" class="text-center">Nenhum componente encontrado.</td>
+        <td colspan="9" class="text-center">Nenhum componente encontrado.</td>
       </tr>
       {% endif %}
     </tbody>
@@ -259,9 +263,7 @@ SGC - Componentes
       const lookups = {
         text: [
           { value: 'icontains', label: 'Contém' },
-          { value: 'exact', label: 'Igual' },
-          { value: 'startswith', label: 'Começa com' },
-          { value: 'endswith', label: 'Termina com' }
+          { value: 'exact', label: 'Igual a' }
         ],
         number: [
           { value: 'exact', label: 'Igual a' },
@@ -432,9 +434,33 @@ SGC - Componentes
       }
     });
   
+    // ── Modal preview ────────────────────────────────────────────────────────
+    document.querySelectorAll('.preview-component').forEach(function (el) {
+      el.addEventListener('click', function () {
+        document.getElementById('previewTitle').textContent       = this.dataset.title       || '—';
+        document.getElementById('previewCategory').textContent    = this.dataset.category    || '—';
+        document.getElementById('previewSubCategory').textContent = this.dataset.subcategory || '—';
+        document.getElementById('previewDescription').textContent = this.dataset.description || '—';
+        document.getElementById('previewPrice').textContent       = this.dataset.price       || '0.00';
+        document.getElementById('previewQuantity').textContent    = this.dataset.quantity    || '0';
+        document.getElementById('previewTotalValue').textContent  = this.dataset.totalValue  || '0.00';
+
+        const container = document.getElementById('previewImageContainer');
+        if (this.dataset.image) {
+          container.innerHTML = '<img src="' + this.dataset.image + '" class="img-fluid rounded" style="max-height:220px;" alt="Imagem">';
+        } else {
+          container.innerHTML = '<i class="bi bi-image text-secondary" style="font-size:3rem;"></i>';
+        }
+
+        const detailLink = document.getElementById('previewDetailLink');
+        detailLink.href = this.dataset.detailUrl || '#';
+      });
+    });
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Initialize the component
     initializeFilters();
-  
+
     // Sort headers functionality
     document.querySelectorAll('.sort-header').forEach(header => {
       header.style.cursor = 'pointer';
