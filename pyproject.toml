@@ -5,10 +5,14 @@ description = "Sistema de Gestão de Componentes"
 requires-python = ">=3.12"
 dependencies = [
     "Django==5.1",
+    "dj-database-url>=2.3.0",
+    "gunicorn>=23.0.0",
     "pillow>=10.4.0",
+    "psycopg2-binary>=2.9.10",
     "python-decouple>=3.8",
     "social-auth-app-django>=5.4.2",
     "social-auth-core>=4.5.4",
+    "whitenoise>=6.8.2",
 ]
 
 [project.optional-dependencies]

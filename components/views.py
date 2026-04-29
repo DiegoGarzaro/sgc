@@ -1,6 +1,7 @@
 import json
 from urllib.parse import urlencode
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
@@ -216,6 +217,7 @@ class ComponentDeleteView(
         return context
 
 
+@login_required
 def load_subcategories(request):
     category_id = request.GET.get("category_id")
     if category_id:

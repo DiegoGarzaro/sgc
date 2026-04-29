@@ -32,9 +32,8 @@ def home(request: HttpRequest) -> HttpResponse | JsonResponse:
         low_stock_components = metrics.get_low_stock_components(
             threshold=low_stock_threshold
         )
-    except Exception as e:
-        # Log the error or handle it appropriately
-        messages.error(request, f"Error retrieving metrics: {e!s}")
+    except Exception:
+        messages.error(request, "Erro ao carregar métricas. Tente novamente.")
         component_metrics = {}
         component_quantity = {}
         component_quantity_per_category = {}
