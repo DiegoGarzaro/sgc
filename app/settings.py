@@ -189,7 +189,8 @@ _testing = len(sys.argv) > 1 and sys.argv[1] == "test"
 
 # Production security settings (active when DEBUG=False and not running tests)
 if not DEBUG and not _testing:
-    SECURE_SSL_REDIRECT = True
+    # Railway terminates SSL at the load balancer; trust the X-Forwarded-Proto header
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000
