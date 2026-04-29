@@ -38,6 +38,13 @@ jobs:
           SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET: ${{ secrets.SGC_SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET }}
         run: uv run python manage.py test
 
+      - name: Run unit tests
+        env:
+          SECRET_KEY: ${{ secrets.SGC_DJANGO_SECRET_KEY }}
+          SOCIAL_AUTH_GOOGLE_OAUTH2_KEY: ${{ secrets.SGC_SOCIAL_AUTH_GOOGLE_OAUTH2_KEY }}
+          SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET: ${{ secrets.SGC_SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET }}
+        run: venv/bin/python manage.py test
+
       # Validate the PR title (for squash merges)
       - name: Validate Pull Request Title
         if: github.event_name == 'pull_request'
