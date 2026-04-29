@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 import dj_database_url
@@ -184,8 +185,10 @@ LOGOUT_REDIRECT_URL = "login"
 # Additional settings for social-auth-app-django
 SOCIAL_AUTH_URL_NAMESPACE = "social"
 
-# Production security settings (active when DEBUG=False)
-if not DEBUG:
+_testing = len(sys.argv) > 1 and sys.argv[1] == "test"
+
+# Production security settings (active when DEBUG=False and not running tests)
+if not DEBUG and not _testing:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

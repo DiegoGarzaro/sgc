@@ -545,6 +545,13 @@ class LoadSubcategoriesViewTest(TestCase):
             name="Electrolytic", category=self.category
         )
         self.sub2 = SubCategory.objects.create(name="Ceramic", category=self.category)
+        self.user = User.objects.create_user(username="u", password="p")
+        self.client.force_login(self.user)
+
+    def test_anonymous_redirects_to_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
 
     def test_returns_subcategories_for_valid_category(self):
         response = self.client.get(self.url, {"category_id": self.category.pk})
