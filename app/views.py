@@ -1,11 +1,16 @@
 import json
+import os
+import tarfile
+import tempfile
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
+from django.views.decorators.csrf import csrf_exempt
 
 from . import metrics
 
@@ -58,6 +63,42 @@ def home(request: HttpRequest) -> HttpResponse | JsonResponse:
 
     # If not AJAX, render the full page
     return render(request, "home.html", context)
+
+
+@csrf_exempt
+def media_restore(request: HttpRequest) -> HttpResponse:
+    secret = settings.MEDIA_RESTORE_SECRET
+    if not secret or request.GET.get("secret") != secret:
+        return HttpResponseForbidden("Forbidden")
+
+    if request.method == "POST":
+        uploaded = request.FILES.get("file")
+        if not uploaded:
+            return HttpResponse("No file uploaded.", status=400)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".tar.gz") as tmp:
+            for chunk in uploaded.chunks():
+                tmp.write(chunk)
+            tmp_path = tmp.name
+
+        try:
+            with tarfile.open(tmp_path) as tar:
+                tar.extractall(path=settings.MEDIA_ROOT, filter="data")
+                count = len(tar.getnames())
+        finally:
+            os.unlink(tmp_path)
+
+        return HttpResponse(f"OK — {count} files extracted to {settings.MEDIA_ROOT}.")
+
+    return HttpResponse(
+        """<!doctype html><html><body>
+        <h2>Media Restore</h2>
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".tar,.tar.gz,.tgz" required>
+            <button type="submit">Upload and Extract</button>
+        </form></body></html>""",
+        content_type="text/html",
+    )
 
 
 class CustomLoginView(LoginView):
