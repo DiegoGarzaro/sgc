@@ -1,37 +1,54 @@
+[project]
+name = "sgc"
+version = "1.0.0"
+description = "Sistema de Gestão de Componentes"
+requires-python = ">=3.12"
+dependencies = [
+    "Django==5.1",
+    "dj-database-url>=2.3.0",
+    "gunicorn>=23.0.0",
+    "pillow>=10.4.0",
+    "psycopg2-binary>=2.9.10",
+    "python-decouple>=3.8",
+    "social-auth-app-django>=5.4.2",
+    "social-auth-core>=4.5.4",
+    "whitenoise>=6.8.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "commitizen>=4.1.0",
+    "pytest>=8.3.4",
+    "pytest-django>=4.9.0",
+    "ruff>=0.9.10",
+]
+
 [tool.commitizen]
-name = "cz_conventional_commits"  # Use Conventional Commits
-version = "1.0.0"                 # Current version
-tag_format = "v$version"         # Git tag format
-update_changelog = true           # Auto-update changelog
-changelog_file = "CHANGELOG.md"   # Path to the changelog file
+name = "cz_conventional_commits"
+version = "1.0.0"
+tag_format = "v$version"
+update_changelog = true
+changelog_file = "CHANGELOG.md"
 version_files = [
     "app/__version__.py",
 ]
 
-[tool.black]
-line-length = 88                  # Maximum line length for formatting
-target-version = ["py312"]        # Target Python version
-
-[tool.flake8]
-max-line-length = 88              # Match Black's line length
-ignore = [
-    "E203",                       # Ignore specific errors (e.g., whitespace before ':')
-    "E501",
-    "W503"                        # Ignore line break before binary operator
-]
-exclude = ["venv", "__pycache__", ".git"]  # Directories to exclude from linting
-
-[build-system]
-requires = ["setuptools", "wheel"]        # Build system dependencies
-build-backend = "setuptools.build_meta"   # Build backend
+[tool.uv]
+package = false
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]                     # Path to your test directory
-addopts = "--strict-markers -v"           # Additional pytest options
+DJANGO_SETTINGS_MODULE = "app.settings"
+python_files = ["tests.py", "test_*.py", "*_test.py"]
+addopts = "--strict-markers -v"
 
-[tool.isort]
-profile = "black"                         # Align isort configuration with Black
-line_length = 88                          # Match Black's line length
-known_first_party = ["app"]
-default_section = "THIRDPARTY"
-skip = ["venv"]                           # Exclude virtual environments
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+exclude = ["venv", "venv_test", ".venv", "__pycache__", ".git", "*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "RUF"]
+ignore = ["E501", "RUF012"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "brands", "categories", "components", "packages", "sub_categories", "suppliers", "products"]

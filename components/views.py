@@ -1,11 +1,12 @@
 import json
 from urllib.parse import urlencode
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
 from django.http import JsonResponse
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -19,21 +20,51 @@ from app import metrics
 from .forms import ComponentForm
 from .models import Brand, Category, Component, SubCategory
 
+ALLOWED_FILTER_FIELDS = frozenset(
+    {
+        "title",
+        "serie_number",
+        "location",
+        "description",
+        "quantity",
+        "price",
+        "category__name",
+        "sub_category__name",
+        "brand__name",
+        "package__name",
+    }
+)
+
+ALLOWED_FILTER_LOOKUPS = frozenset(
+    {
+        "icontains",
+        "exact",
+        "gte",
+        "lte",
+        "gt",
+        "lt",
+    }
+)
+
+ALLOWED_SORT_FIELDS = frozenset({"title", "quantity", "price"})
+
 
 class FilterStateMixin:
-    """Mixin to handle filter state persistence"""
+    """Mixin to handle filter state persistence across CRUD operations."""
 
-    def get_success_url(self):
-        # Get the base success URL
+    def get_success_url(self) -> str:
+        """Return component list URL preserving current filter and sort state.
+
+        Returns:
+            str: URL with encoded filter query parameters.
+        """
         url = reverse("component_list")
 
-        # Get all filter parameters from the request
-        filter_params = {}
+        filter_params: dict[str, list[str] | str] = {}
         filter_fields = self.request.GET.getlist("filterField[]", [])
         filter_lookups = self.request.GET.getlist("filterLookup[]", [])
         filter_values = self.request.GET.getlist("filterValue[]", [])
 
-        # Add them to the parameters if they exist
         if filter_fields:
             filter_params["filterField[]"] = filter_fields
         if filter_lookups:
@@ -41,7 +72,6 @@ class FilterStateMixin:
         if filter_values:
             filter_params["filterValue[]"] = filter_values
 
-        # Add sorting parameters if they exist
         sort = self.request.GET.get("sort")
         order = self.request.GET.get("order")
         if sort:
@@ -49,7 +79,6 @@ class FilterStateMixin:
         if order:
             filter_params["order"] = order
 
-        # If we have any parameters, add them to the URL
         if filter_params:
             return f"{url}?{urlencode(filter_params, doseq=True)}"
         return url
@@ -63,15 +92,25 @@ class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     permission_required = "components.view_component"
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related("category", "sub_category", "brand", "package")
+        )
         dynamic_filter = Q()
 
         fields = self.request.GET.getlist("filterField[]")
         lookups = self.request.GET.getlist("filterLookup[]")
         values = self.request.GET.getlist("filterValue[]")
 
-        for field, lookup, value in zip(fields, lookups, values):
-            if field and lookup and value:
+        for field, lookup, value in zip(fields, lookups, values, strict=False):
+            if (
+                field
+                and lookup
+                and value
+                and field in ALLOWED_FILTER_FIELDS
+                and lookup in ALLOWED_FILTER_LOOKUPS
+            ):
                 filter_expression = f"{field}__{lookup}"
                 dynamic_filter &= Q(**{filter_expression: value})
 
@@ -79,7 +118,7 @@ class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
         sort_by = self.request.GET.get("sort", "title")
         direction = self.request.GET.get("order", "asc")
-        if sort_by in ["title", "quantity"]:
+        if sort_by in ALLOWED_SORT_FIELDS:
             if direction == "desc":
                 sort_by = f"-{sort_by}"
             queryset = queryset.order_by(sort_by)
@@ -94,8 +133,6 @@ class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context["brands"] = Brand.objects.all()
         context["current_sort"] = self.request.GET.get("sort", "title")
         context["current_order"] = self.request.GET.get("order", "asc")
-
-        # Add filter state to context
         context["filter_state"] = {
             "fields": self.request.GET.getlist("filterField[]"),
             "lookups": self.request.GET.getlist("filterLookup[]"),
@@ -121,7 +158,6 @@ class ComponentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVie
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add filter parameters to context for back button
         context["filter_params"] = urlencode(self.request.GET, doseq=True)
         return context
 
@@ -138,10 +174,8 @@ class ComponentUpdateView(
         context = super().get_context_data(**kwargs)
         component = self.object
 
-        # Add filter parameters to context
         context["filter_params"] = urlencode(self.request.GET, doseq=True)
 
-        # Existing context data
         all_components = Component.objects.exclude(id=component.id)
         context["all_components_json"] = json.dumps(
             list(all_components.values("id", "title", "serie_number")),
@@ -179,11 +213,11 @@ class ComponentDeleteView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add filter parameters to context for cancel button
         context["filter_params"] = urlencode(self.request.GET, doseq=True)
         return context
 
 
+@login_required
 def load_subcategories(request):
     category_id = request.GET.get("category_id")
     if category_id:

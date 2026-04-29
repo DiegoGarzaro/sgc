@@ -12,35 +12,33 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Install Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12.4'
 
-      - name: Create Python venv
-        run: python -m venv venv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Lint and format check with Ruff
         run: |
-          venv/bin/python -m pip install --upgrade pip
-          venv/bin/python -m pip install -r requirements_dev.txt
-          venv/bin/python -m pip install -r requirements.txt
-
-      - name: Check Code Formatting with Black
-        run: venv/bin/black --check .
-
-      - name: Check Import Sorting with Isort
-        run: venv/bin/isort --check .
+          uv run ruff check .
+          uv run ruff format --check .
 
       - name: Run unit tests
         env:
           SECRET_KEY: ${{ secrets.SGC_DJANGO_SECRET_KEY }}
           SOCIAL_AUTH_GOOGLE_OAUTH2_KEY: ${{ secrets.SGC_SOCIAL_AUTH_GOOGLE_OAUTH2_KEY }}
           SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET: ${{ secrets.SGC_SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET }}
-        run: venv/bin/python manage.py test
+        run: uv run python manage.py test
 
       # Validate the PR title (for squash merges)
       - name: Validate Pull Request Title
         if: github.event_name == 'pull_request'
-        run: venv/bin/python -m commitizen check --message "${{ github.event.pull_request.title }}"
+        run: uv run python -m commitizen check --message "${{ github.event.pull_request.title }}"

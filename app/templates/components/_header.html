@@ -1,7 +1,47 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand text-white text-wrap" href="#" style="white-space: normal;">
-      Sistema de Gestão de Componentes (SGC)
-    </a>
+<nav class="navbar navbar-dark bg-dark py-3" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+  <div class="container-fluid px-4">
+    <!-- Hamburger (mobile only) + Brand -->
+    <div class="d-flex align-items-center gap-3">
+      {% if user.is_authenticated %}
+      <button class="btn btn-link p-0 text-white d-md-none"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#mobileSidebar"
+              aria-controls="mobileSidebar"
+              aria-label="Abrir menu">
+        <i class="bi bi-list fs-4"></i>
+      </button>
+      {% endif %}
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold mb-0" href="{% url 'home' %}">
+        <div class="rounded-2 bg-primary d-flex align-items-center justify-content-center"
+             style="width: 32px; height: 32px;">
+          <i class="bi bi-cpu text-white" style="font-size: 1.1rem;"></i>
+        </div>
+        <span>SGC <span class="text-primary">Componentes</span></span>
+      </a>
+    </div>
   </div>
 </nav>
+
+{% if user.is_authenticated %}
+<!-- Mobile offcanvas sidebar -->
+<div class="offcanvas offcanvas-start text-white"
+     style="width: 260px; background-color: var(--card-bg);"
+     tabindex="-1"
+     id="mobileSidebar"
+     aria-labelledby="mobileSidebarLabel">
+  <div class="offcanvas-header border-bottom border-secondary border-opacity-25 pb-3">
+    <div class="d-flex align-items-center gap-2 fw-bold">
+      <div class="rounded-2 bg-primary d-flex align-items-center justify-content-center"
+           style="width: 28px; height: 28px;">
+        <i class="bi bi-cpu text-white"></i>
+      </div>
+      <span id="mobileSidebarLabel">SGC <span class="text-primary">Componentes</span></span>
+    </div>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    {% include 'components/_sidebar.html' %}
+  </div>
+</div>
+{% endif %}

@@ -1,3 +1,4 @@
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
 from django.utils import timezone
 from django.utils.formats import number_format
 
@@ -6,80 +7,94 @@ from components.models import Component
 from suppliers.models import Supplier
 
 
-def get_component_metrics():
-    components = Component.objects.all()
+def get_component_metrics() -> dict:
+    """Aggregate top-level inventory metrics in a single DB query.
 
-    total_quantity = sum((component.quantity or 0) for component in components)
-    total_price = sum(
-        (component.price or 0) * (component.quantity or 0) for component in components
+    Returns:
+        dict: Keys are total_quantity (int), total_price (str, formatted),
+            and component_count (int).
+    """
+    result = Component.objects.aggregate(
+        total_quantity=Sum("quantity"),
+        component_count=Count("id"),
+        total_price=Sum(
+            ExpressionWrapper(
+                F("price") * F("quantity"),
+                output_field=DecimalField(max_digits=20, decimal_places=2),
+            )
+        ),
     )
-    component_count = len(components) or 0
 
-    return dict(
-        total_quantity=total_quantity,
-        total_price=number_format(total_price, decimal_pos=2, force_grouping=True),
-        component_count=component_count,
-    )
-
-
-def get_supplier_metrics():
-    suppliers = Supplier.objects.all()
-    supplier_count = len(suppliers) or 0
-
-    return dict(supplier_count=supplier_count)
+    return {
+        "total_quantity": result["total_quantity"] or 0,
+        "total_price": number_format(
+            result["total_price"] or 0, decimal_pos=2, force_grouping=True
+        ),
+        "component_count": result["component_count"] or 0,
+    }
 
 
-def get_component_quantity():
+def get_supplier_metrics() -> dict:
+    """Return total number of suppliers.
+
+    Returns:
+        dict: Key is supplier_count (int).
+    """
+    return {"supplier_count": Supplier.objects.count()}
+
+
+def get_component_quantity() -> dict:
+    """Return daily quantity totals for components created in the last 7 days.
+
+    Returns:
+        dict: Keys are dates (list[str]) and values (list[int]).
+    """
     today = timezone.now().date()
-
     dates = [str(today - timezone.timedelta(days=i)) for i in range(7, 0, -1)]
-    values = list()
-
-    for date in dates:
-        date_components = Component.objects.filter(created_at__date=date)
-        total_quantity = sum(component.quantity or 0 for component in date_components)
-        values.append(total_quantity)
-
-    return dict(
-        dates=dates,
-        values=values,
-    )
-
-
-def get_component_quantity_per_category():
-    components = Component.objects.all()
-    categories = Category.objects.all()
-
-    quantity_per_category = {}
-
-    for component in components:
-        category_id = component.category_id
-
-        if category_id not in quantity_per_category:
-            quantity_per_category[category_id] = 0
-
-        quantity_per_category[category_id] += component.quantity or 0
-
-    category_names = [
-        category.name for category in categories if category.id in quantity_per_category
-    ]
     values = [
-        quantity_per_category[category.id]
-        for category in categories
-        if category.id in quantity_per_category
+        Component.objects.filter(created_at__date=date_str).aggregate(
+            total=Sum("quantity")
+        )["total"]
+        or 0
+        for date_str in dates
     ]
+    return {"dates": dates, "values": values}
 
-    return dict(categories=category_names, values=values)
+
+def get_component_quantity_per_category() -> dict:
+    """Return total component quantity grouped by category.
+
+    Returns:
+        dict: Keys are categories (list[str]) and values (list[int]),
+            sorted by quantity descending.
+    """
+    categories = (
+        Category.objects.filter(components__isnull=False)
+        .annotate(total_qty=Sum("components__quantity"))
+        .order_by("-total_qty")
+    )
+    return {
+        "categories": [c.name for c in categories],
+        "values": [c.total_qty or 0 for c in categories],
+    }
 
 
-def get_low_stock_components(threshold=10):
+def get_low_stock_components(threshold: int = 10):
+    """Return components whose quantity is below the given threshold.
+
+    Args:
+        threshold (int): Maximum quantity to be considered low stock.
+
+    Returns:
+        QuerySet: Component queryset ordered by quantity ascending.
+    """
     try:
         threshold = int(threshold)
     except (ValueError, TypeError):
-        threshold = 10  # Default to 10 if invalid input
+        threshold = 10
 
-    low_stock_components = Component.objects.filter(quantity__lt=threshold).order_by(
-        "quantity"
+    return (
+        Component.objects.filter(quantity__lt=threshold)
+        .select_related("brand", "category")
+        .order_by("quantity")
     )
-
-    return low_stock_components

@@ -11,8 +11,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
+import dj_database_url
 from decouple import config
 from django.contrib.messages import constants as messages
 
@@ -52,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -97,12 +100,16 @@ WSGI_APPLICATION = "app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": config("DB_ENGINE", default="django.db.backends.sqlite3"),
-        "NAME": BASE_DIR / config("DB_NAME", default="db.sqlite3"),
+_database_url = config("DATABASE_URL", default=None)
+if _database_url:
+    DATABASES = {"default": dj_database_url.parse(_database_url, conn_max_age=600)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": config("DB_ENGINE", default="django.db.backends.sqlite3"),
+            "NAME": BASE_DIR / config("DB_NAME", default="db.sqlite3"),
+        }
     }
-}
 
 
 # Password validation
@@ -141,13 +148,19 @@ USE_TZ = True
 
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = "static/"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = config("MEDIA_ROOT", default=os.path.join(BASE_DIR, "media"))
 MEDIA_URL = "/media/"
 
 # Add Google OAuth 2.0 backend and authentication settings
@@ -171,6 +184,19 @@ LOGOUT_REDIRECT_URL = "login"
 
 # Additional settings for social-auth-app-django
 SOCIAL_AUTH_URL_NAMESPACE = "social"
+
+_testing = len(sys.argv) > 1 and sys.argv[1] == "test"
+
+# Production security settings (active when DEBUG=False and not running tests)
+if not DEBUG and not _testing:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
 
 SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.social_details",

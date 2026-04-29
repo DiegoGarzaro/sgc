@@ -1,96 +1,166 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Novo Componente - SGC{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h3 class="display-6">Criar Novo Componente</h3>
-    <form method="post" enctype="multipart/form-data" id="componentForm">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        
-        <div class="mb-3">
-            {{ form.title.label_tag }}
-            {{ form.title }}
-            {{ form.title.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.category.label_tag }}
-            {{ form.category }}
-            {{ form.category.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.sub_category.label_tag }}
-            <select id="subCategory" name="sub_category" class="form-control">
-                <option value="">-</option>
-            </select>
-            {{ form.sub_category.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.package.label_tag }}
-            {{ form.package }}
-            {{ form.package.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.brand.label_tag }}
-            {{ form.brand }}
-            {{ form.brand.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.description.label_tag }}
-            {{ form.description }}
-            {{ form.description.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.location.label_tag }}
-            {{ form.location }}
-            {{ form.location.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.equivalent.label_tag }}
-            {{ form.equivalent }}
-            {{ form.equivalent.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.datasheet.label_tag }}
-            {{ form.datasheet }}
-            {{ form.datasheet.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.image.label_tag }}
-            {{ form.image }}
-            {{ form.image.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.serie_number.label_tag }}
-            {{ form.serie_number }}
-            {{ form.serie_number.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.price.label_tag }}
-            {{ form.price }}
-            {{ form.price.errors }}
-        </div>
-
-        <div class="mb-3">
-            {{ form.quantity.label_tag }}
-            {{ form.quantity }}
-            {{ form.quantity.errors }}
-        </div>
-
-        <button type="submit" class="btn btn-primary">Salvar</button>
-    </form>
-    <a href="{% url 'component_list' %}?{{ request.GET.urlencode }}" class="btn btn-secondary mt-3">Voltar para Lista de Componentes</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Novo Componente</h2>
+        <p class="text-secondary small mb-0">Preencha as informações para adicionar ao inventário.</p>
+    </div>
+    <a href="{% url 'component_list' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left"></i>
+        <span>Voltar</span>
+    </a>
 </div>
+
+<form method="post" enctype="multipart/form-data" id="componentForm">
+    {% csrf_token %}
+    
+    {% if form.errors %}
+    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-25 text-danger mb-4">
+        <i class="bi bi-exclamation-circle me-2"></i>
+        Parece que há erros no formulário. Por favor, verifique os campos abaixo.
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Main Info -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0">Informações Básicas</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="{{ form.title.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Título do Componente</label>
+                            <input type="text" name="title" id="{{ form.title.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" placeholder="Ex: Resistor 10k 1/4W 5%" required value="{{ form.title.value|default:'' }}">
+                            {{ form.title.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.category.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Categoria</label>
+                            <select name="category" id="id_category" class="form-select bg-secondary bg-opacity-10 border-0 text-white p-3" required>
+                                {% for choice in form.category.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if form.category.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {{ form.category.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="subCategory" class="form-label text-secondary small uppercase fw-bold">Sub-Categoria</label>
+                            <select id="subCategory" name="sub_category" class="form-select bg-secondary bg-opacity-10 border-0 text-white p-3">
+                                <option value="">-</option>
+                            </select>
+                            {{ form.sub_category.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.brand.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Marca/Fabricante</label>
+                            <select name="brand" id="{{ form.brand.id_for_label }}" class="form-select bg-secondary bg-opacity-10 border-0 text-white p-3" required>
+                                {% for choice in form.brand.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if form.brand.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {{ form.brand.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.package.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Encapsulamento</label>
+                            <select name="package" id="{{ form.package.id_for_label }}" class="form-select bg-secondary bg-opacity-10 border-0 text-white p-3" required>
+                                {% for choice in form.package.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if form.package.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {{ form.package.errors }}
+                        </div>
+                        <div class="col-12">
+                            <label for="{{ form.description.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Descrição Detalhada</label>
+                            <textarea name="description" id="{{ form.description.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" rows="4" placeholder="Especificações técnicas, notas de uso, etc.">{{ form.description.value|default:'' }}</textarea>
+                            {{ form.description.errors }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Details -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0">Estoque e Localização</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.quantity.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Quantidade Inicial</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-secondary bg-opacity-10 border-0 text-secondary"><i class="bi bi-box-seam"></i></span>
+                                <input type="number" name="quantity" id="{{ form.quantity.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" value="{{ form.quantity.value|default:0 }}" required>
+                            </div>
+                            {{ form.quantity.errors }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.price.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Preço Unitário (R$)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-secondary bg-opacity-10 border-0 text-secondary">R$</span>
+                                <input type="number" step="0.01" name="price" id="{{ form.price.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" value="{{ form.price.value|default:0.00 }}" required>
+                            </div>
+                            {{ form.price.errors }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.serie_number.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Part Number / Série</label>
+                            <input type="text" name="serie_number" id="{{ form.serie_number.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" placeholder="Ex: 1N4148" value="{{ form.serie_number.value|default:'' }}">
+                            {{ form.serie_number.errors }}
+                        </div>
+                        <div class="col-12">
+                            <label for="{{ form.location.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Localização no Almoxarifado</label>
+                            <input type="text" name="location" id="{{ form.location.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" placeholder="Ex: Gaveta A-1, Prateleira 2" value="{{ form.location.value|default:'' }}">
+                            {{ form.location.errors }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Actions/Media -->
+        <div class="col-lg-4">
+            <!-- Media Uploads -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0">Mídia e Documentos</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <label for="{{ form.image.id_for_label }}" class="form-label text-secondary small uppercase fw-bold mb-2">Imagem do Componente</label>
+                        <div class="image-upload-wrapper rounded-3 bg-secondary bg-opacity-10 p-4 text-center border-2 border-dashed border-secondary border-opacity-25">
+                            <i class="bi bi-cloud-arrow-up display-4 text-secondary opacity-50 mb-2"></i>
+                            <input type="file" name="image" id="{{ form.image.id_for_label }}" class="form-control bg-transparent border-0 text-secondary" accept="image/*">
+                            <p class="small text-secondary mt-2 mb-0">PNG, JPG até 2MB</p>
+                        </div>
+                        {{ form.image.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.datasheet.id_for_label }}" class="form-label text-secondary small uppercase fw-bold mb-2">Datasheet (PDF)</label>
+                        <input type="file" name="datasheet" id="{{ form.datasheet.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-secondary" accept=".pdf">
+                        {{ form.datasheet.errors }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="card border-0 shadow-sm bg-primary bg-opacity-10 border border-primary border-opacity-10">
+                <div class="card-body p-4">
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-check-lg fs-5"></i>
+                        <span>Salvar Componente</span>
+                    </button>
+                    <a href="{% url 'component_list' %}" class="btn btn-link w-100 mt-2 text-secondary text-decoration-none small">
+                        Descartar alterações
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -100,15 +170,12 @@ document.addEventListener('DOMContentLoaded', function () {
     categorySelect.addEventListener('change', function () {
         const categoryId = categorySelect.value;
 
-        // Clear existing options
-        // subCategorySelect.innerHTML = '<option value="">Carregando subcategorias...</option>';
-
         if (categoryId) {
-            // Fetch subcategories for the selected category
+            subCategorySelect.innerHTML = '<option value="">Carregando...</option>';
             fetch(`/ajax/load-subcategories/?category_id=${categoryId}`)
                 .then(response => response.json())
                 .then(data => {
-                    subCategorySelect.innerHTML = '<option value="">-</option>';
+                    subCategorySelect.innerHTML = '<option value="">- Selecione uma sub-categoria -</option>';
                     data.forEach(subCategory => {
                         const option = document.createElement('option');
                         option.value = subCategory.id;
@@ -118,13 +185,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .catch(error => {
                     console.error('Erro ao buscar subcategorias:', error);
-                    subCategorySelect.innerHTML = '<option value="">Erro ao carregar subcategorias</option>';
+                    subCategorySelect.innerHTML = '<option value="">Erro ao carregar</option>';
                 });
         } else {
-            // If no category is selected, show an empty dropdown
             subCategorySelect.innerHTML = '<option value="">-</option>';
         }
     });
 });
 </script>
+
+<style>
+.uppercase { text-transform: uppercase; letter-spacing: 0.05em; }
+.form-control:focus, .form-select:focus {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: none;
+    border: 1px solid var(--bs-primary) !important;
+}
+.border-dashed { border-style: dashed !important; }
+</style>
 {% endblock %}

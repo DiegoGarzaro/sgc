@@ -12,6 +12,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Remove invalid tags
+        run: |
+          git tag --list | grep -v '^v' | xargs -r git tag -d
 
       - name: Install Python
         uses: actions/setup-python@v4
@@ -38,3 +45,4 @@ jobs:
           tag_name: ${{ env.REVISION }}
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+

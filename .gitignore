@@ -1,7 +1,17 @@
-venv
-*.sqlite3
+# Python
 __pycache__/
+*.py[cod]
 
+# Virtual environments
+venv/
+venv_test/
+.venv/
+
+# Django
+*.sqlite3*
 .env
+media*/
+staticfiles/
 
-media
+# macOS
+.DS_Store

@@ -1,66 +1,90 @@
-<!-- _low_stock_components.html -->
-<div class="card border-warning mb-3">
-    <div class="card-header bg-warning text-black d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
-      <div class="mb-2 mb-sm-0">
-        <i class="fas fa-exclamation-triangle me-2"></i> Componentes com Estoque Baixo
-      </div>
-      <!-- Filter Form -->
-      <form id="low-stock-filter-form" method="get" class="d-flex flex-wrap align-items-center gap-2 mb-2 mb-sm-0">
-        <label for="low_stock_threshold" class="text-dark mb-0">
-          Mostrar componentes abaixo de:
-        </label>
-        <select name="low_stock_threshold" id="low_stock_threshold" class="form-select form-select-sm">
-          {% for threshold in standard_thresholds %}
-          <option value="{{ threshold }}" {% if low_stock_threshold == threshold %}selected{% endif %}>
-            {{ threshold }} unidades
-          </option>
-          {% endfor %}
-        </select>
-        {% if low_stock_threshold not in standard_thresholds %}
-        <input type="number" name="low_stock_threshold" value="{{ low_stock_threshold }}"
-               class="form-control form-control-sm" min="1" placeholder="Valor personalizado">
-        {% endif %}
-      </form>
+<div class="card border-0 shadow-sm" style="border-left: 3px solid #dc3545 !important;">
+  <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 px-4 pt-4 pb-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+        Alertas de Estoque Baixo
+      </h5>
+      <p class="text-secondary small mb-0 mt-1">Componentes abaixo do limite de segurança</p>
     </div>
-  
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-striped table-hover mb-0">
-          <thead class="table-dark">
-            <tr>
-              <th class="ps-4">Fabricante</th>
-              <th>Nome</th>
-              <th>Categoria</th>
-              <th class="text-center">Quantidade Atual</th>
-              <th>Ação Recomendada</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if low_stock_components %}
-              {% for component in low_stock_components %}
-              <tr>
-                <td class="ps-4">{{ component.brand.name }}</td>
-                <td>{{ component.title }}</td>
-                <td>{{ component.category.name }}</td>
-                <td class="text-danger fw-bold text-center">{{ component.quantity|default:0 }}</td>
-                <td>
-                  <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top"
-                    title="Estoque crítico, reabasteça o quanto antes!">
-                    <i class="fas fa-exclamation-circle"></i> Comprar Urgente
-                  </span>
-                </td>
-              </tr>
-              {% endfor %}
-            {% else %}
-            <tr>
-              <td colspan="5" class="text-center py-3">
-                Nenhum componente encontrado com estoque abaixo de {{ low_stock_threshold }} unidades.
-              </td>
-            </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
+    <form id="low-stock-filter-form" class="d-flex align-items-center gap-2">
+      <label for="low_stock_threshold" class="small text-secondary text-nowrap mb-0">Limite:</label>
+      <input
+        type="number"
+        name="low_stock_threshold"
+        id="low_stock_threshold"
+        value="{{ low_stock_threshold }}"
+        class="form-control form-control-sm text-center fw-bold"
+        style="width: 64px;"
+        min="1"
+        max="100">
+    </form>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr class="border-secondary border-opacity-25">
+            <th class="ps-4 py-3 text-secondary fw-medium small text-uppercase border-0">Componente</th>
+            <th class="py-3 text-secondary fw-medium small text-uppercase border-0">Categoria</th>
+            <th class="py-3 text-secondary fw-medium small text-uppercase text-center border-0">Qtd</th>
+            <th class="py-3 text-secondary fw-medium small text-uppercase border-0">Status</th>
+            <th class="pe-4 py-3 text-secondary fw-medium small text-uppercase text-end border-0">Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for component in low_stock_components %}
+          <tr class="border-secondary border-opacity-10">
+            <td class="ps-4 py-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-2 bg-danger bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width: 36px; height: 36px;">
+                  <i class="bi bi-cpu text-danger small"></i>
+                </div>
+                <div>
+                  <div class="fw-semibold text-white lh-1 mb-1">{{ component.title }}</div>
+                  <div class="text-secondary small">{{ component.brand.name }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="py-3">
+              <span class="badge rounded-2 bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 fw-normal px-2">
+                {{ component.category.name }}
+              </span>
+            </td>
+            <td class="py-3 text-center">
+              <span class="fw-bold fs-6 {% if component.quantity == 0 %}text-danger{% else %}text-warning{% endif %}">
+                {{ component.quantity }}
+              </span>
+            </td>
+            <td class="py-3">
+              {% if component.quantity == 0 %}
+              <span class="badge rounded-2 bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 fw-medium">
+                ESGOTADO
+              </span>
+              {% else %}
+              <span class="badge rounded-2 bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 fw-medium">
+                CRÍTICO
+              </span>
+              {% endif %}
+            </td>
+            <td class="pe-4 py-3 text-end">
+              <a href="{% url 'component_update' component.id %}" class="btn btn-sm btn-outline-primary px-3">
+                <i class="bi bi-plus-lg me-1"></i>Repor
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-5">
+              <i class="bi bi-check-circle text-success mb-3 d-block" style="font-size: 2.5rem;"></i>
+              <p class="text-secondary mb-0">Tudo em ordem! Nenhum componente abaixo do limite.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
-  
+</div>
