@@ -45,6 +45,7 @@ urlpatterns = [
     # Social Authentication
     path("oauth/", include("social_django.urls", namespace="social")),
     path("login/", views.CustomLoginView.as_view(), name="login"),
+    path("media-restore/", views.media_restore, name="media_restore"),
     # Home page
     path("", views.home, name="home"),
     path("", include("brands.urls")),

@@ -169,6 +169,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 MEDIA_ROOT = config("MEDIA_ROOT", default=os.path.join(BASE_DIR, "media"))
 MEDIA_URL = "/media/"
 
+MEDIA_RESTORE_SECRET = config("MEDIA_RESTORE_SECRET", default="")
+
+# Allow large tar uploads (up to 600 MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 629145600
+FILE_UPLOAD_MAX_MEMORY_SIZE = 629145600
+
 # Add Google OAuth 2.0 backend and authentication settings
 AUTHENTICATION_BACKENDS = (
     "social_core.backends.google.GoogleOAuth2",
