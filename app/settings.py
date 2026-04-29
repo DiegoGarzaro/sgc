@@ -31,7 +31,13 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="").split(",")
+ALLOWED_HOSTS = [
+    h.strip() for h in config("ALLOWED_HOSTS", default="").split(",") if h.strip()
+]
+# Railway automatically injects RAILWAY_PUBLIC_DOMAIN — include it so health checks pass
+_railway_domain = config("RAILWAY_PUBLIC_DOMAIN", default="")
+if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_railway_domain)
 
 # Application definition
 
