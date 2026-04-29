@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+venv/
+venv_test/
+.venv/
+__pycache__/
+*.pyc
+*.sqlite3*
+media*/
+staticfiles/
+.DS_Store
+Deploy.md
+README.md
+nixpacks.toml
+docker-compose.yml

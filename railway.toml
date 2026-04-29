@@ -1,9 +1,8 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "uv sync && uv run python manage.py collectstatic --no-input"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "uv run python manage.py migrate --no-input && uv run gunicorn app.wsgi:application --bind 0.0.0.0:$PORT --workers 2"
 healthcheckPath = "/login/"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
