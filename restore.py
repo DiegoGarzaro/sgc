@@ -22,7 +22,6 @@ def main():
         print(f"File not found: {sqlite_path}")
         sys.exit(1)
 
-    # Boot Django with PostgreSQL (from environment DATABASE_URL)
     django.setup()
 
     from django.core.management import call_command
@@ -31,16 +30,16 @@ def main():
 
     print(f"Reading from: {sqlite_path}")
 
-    # Step 1 — dump data from SQLite to a temp file
+    # Step 1 — dump from SQLite
     tmp = "/tmp/restore_data.json"
-    sqlite_settings = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": sqlite_path,
+    with override_settings(
+        DATABASES={
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": sqlite_path,
+            }
         }
-    }
-
-    with override_settings(DATABASES=sqlite_settings):
+    ):
         connections.close_all()
         call_command(
             "dumpdata",
@@ -55,34 +54,9 @@ def main():
 
     print(f"Exported to {tmp}")
 
-    # Step 2 — wipe PostgreSQL tables and reload
-    from django.db import connection
-
+    # Step 2 — clear PostgreSQL and reload
     print("Clearing PostgreSQL tables...")
-    with connection.cursor() as cursor:
-        cursor.execute("SET session_replication_role = replica;")
-        for table in [
-            "social_django_usersocialauth",
-            "social_django_nonce",
-            "social_django_association",
-            "social_django_code",
-            "social_django_partial",
-            "components_component_equivalents",
-            "components_component",
-            "brands_brand",
-            "categories_category",
-            "sub_categories_subcategory",
-            "packages_package",
-            "suppliers_supplier",
-            "products_product",
-            "auth_user_groups",
-            "auth_user_user_permissions",
-            "auth_user",
-            "auth_group_permissions",
-            "auth_group",
-        ]:
-            cursor.execute(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;")
-        cursor.execute("SET session_replication_role = DEFAULT;")
+    call_command("flush", "--no-input", verbosity=0)
 
     print("Loading data into PostgreSQL...")
     call_command("loaddata", tmp, verbosity=1)
