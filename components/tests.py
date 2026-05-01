@@ -12,8 +12,9 @@ from brands.models import Brand
 from categories.models import Category
 from packages.models import Package
 from sub_categories.models import SubCategory
+from suppliers.models import Supplier
 
-from .models import Component
+from .models import Component, ComponentSupplier
 from .views import ALLOWED_FILTER_FIELDS, ALLOWED_FILTER_LOOKUPS
 
 # ---------------------------------------------------------------------------
@@ -44,6 +45,31 @@ def make_component(**kwargs) -> Component:
     }
     defaults.update(kwargs)
     return Component.objects.create(**defaults)
+
+
+def make_supplier(name="Mouser") -> Supplier:
+    return Supplier.objects.create(name=name)
+
+
+def supplier_formset_data(rows, initial_forms=0, prefix="suppliers"):
+    data = {
+        f"{prefix}-TOTAL_FORMS": str(len(rows)),
+        f"{prefix}-INITIAL_FORMS": str(initial_forms),
+        f"{prefix}-MIN_NUM_FORMS": "1",
+        f"{prefix}-MAX_NUM_FORMS": "1000",
+    }
+
+    for index, row in enumerate(rows):
+        row_data = {
+            f"{prefix}-{index}-supplier": "",
+            f"{prefix}-{index}-serie_number": "",
+            f"{prefix}-{index}-id": "",
+            f"{prefix}-{index}-DELETE": "",
+        }
+        row_data.update(row)
+        data.update(row_data)
+
+    return data
 
 
 def make_user(username="testuser", permissions=None) -> User:
@@ -173,6 +199,33 @@ class ComponentModelTest(TestCase):
         self.assertEqual(c2.equivalent, c1)
         self.assertIn(c2, c1.equivalents.all())
 
+    def test_purchase_options_label_uses_option_count_when_suppliers_exist(self):
+        component = self._build(serie_number="LEGACY-001")
+        component.save()
+        supplier_a = make_supplier("Digi-Key")
+        supplier_b = make_supplier("Farnell")
+
+        ComponentSupplier.objects.create(
+            component=component,
+            supplier=supplier_a,
+            serie_number="DK-100",
+        )
+        ComponentSupplier.objects.create(
+            component=component,
+            supplier=supplier_b,
+            serie_number="FN-200",
+        )
+
+        component.refresh_from_db()
+        self.assertEqual(component.purchase_options_count, 2)
+        self.assertEqual(component.purchase_options_label, "2 opções de compra")
+
+    def test_purchase_options_label_falls_back_to_legacy_field(self):
+        component = self._build(serie_number="LEGACY-123")
+        component.save()
+
+        self.assertEqual(component.purchase_options_label, "LEGACY-123")
+
 
 # ---------------------------------------------------------------------------
 # Form tests
@@ -184,6 +237,7 @@ class ComponentFormTest(TestCase):
         self.category, self.sub_category, self.brand, self.package = (
             make_supporting_objects()
         )
+        self.supplier = make_supplier()
 
     def _form_data(self, **kwargs):
         defaults = {
@@ -243,6 +297,44 @@ class ComponentFormTest(TestCase):
             )
         )
         self.assertTrue(form.is_valid(), form.errors)
+
+    def test_component_supplier_formset_valid_with_single_purchase_option(self):
+        from .forms import ComponentSupplierFormSet
+
+        component = make_component()
+        formset = ComponentSupplierFormSet(
+            data={
+                "suppliers-TOTAL_FORMS": "1",
+                "suppliers-INITIAL_FORMS": "0",
+                "suppliers-MIN_NUM_FORMS": "1",
+                "suppliers-MAX_NUM_FORMS": "1000",
+                "suppliers-0-supplier": str(self.supplier.pk),
+                "suppliers-0-serie_number": "ABC-123",
+            },
+            instance=component,
+            prefix="suppliers",
+        )
+
+        self.assertTrue(formset.is_valid(), formset.errors)
+
+    def test_component_supplier_formset_requires_supplier_when_row_has_serial(self):
+        from .forms import ComponentSupplierFormSet
+
+        component = make_component()
+        formset = ComponentSupplierFormSet(
+            data={
+                "suppliers-TOTAL_FORMS": "1",
+                "suppliers-INITIAL_FORMS": "0",
+                "suppliers-MIN_NUM_FORMS": "1",
+                "suppliers-MAX_NUM_FORMS": "1000",
+                "suppliers-0-serie_number": "ABC-123",
+            },
+            instance=component,
+            prefix="suppliers",
+        )
+
+        self.assertFalse(formset.is_valid())
+        self.assertIn("supplier", formset.forms[0].errors)
 
 
 # ---------------------------------------------------------------------------
@@ -385,6 +477,7 @@ class ComponentCreateViewTest(TestCase):
         self.category, self.sub_category, self.brand, self.package = (
             make_supporting_objects()
         )
+        self.supplier = make_supplier()
 
     def test_get_returns_200(self):
         self.client.force_login(self.user)
@@ -406,8 +499,21 @@ class ComponentCreateViewTest(TestCase):
             "quantity": 5,
             "price": "1.00",
         }
+        data.update(
+            supplier_formset_data(
+                [
+                    {
+                        "suppliers-0-supplier": str(self.supplier.pk),
+                        "suppliers-0-serie_number": "NEW-001",
+                    }
+                ]
+            )
+        )
         response = self.client.post(self.url, data)
         self.assertTrue(Component.objects.filter(title="New Component").exists())
+        component = Component.objects.get(title="New Component")
+        self.assertEqual(component.suppliers.count(), 1)
+        self.assertEqual(component.purchase_options_label, "1 opção de compra")
         # Don't follow the redirect — the test user only has add_component, not view_component
         self.assertRedirects(
             response, reverse("component_list"), fetch_redirect_response=False
@@ -415,9 +521,35 @@ class ComponentCreateViewTest(TestCase):
 
     def test_post_invalid_data_shows_form_errors(self):
         self.client.force_login(self.user)
-        response = self.client.post(self.url, {"title": ""})
+        data = {"title": ""}
+        data.update(supplier_formset_data([{}]))
+        response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["form"].errors)
+
+    def test_post_without_valid_supplier_rows_shows_formset_errors(self):
+        self.client.force_login(self.user)
+        data = {
+            "title": "Component Without Supplier",
+            "category": self.category.pk,
+            "sub_category": self.sub_category.pk,
+            "brand": self.brand.pk,
+            "package": self.package.pk,
+            "quantity": 5,
+            "price": "1.00",
+        }
+        data.update(supplier_formset_data([{}]))
+
+        response = self.client.post(self.url, data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            Component.objects.filter(title="Component Without Supplier").exists()
+        )
+        self.assertIn(
+            "Adicione pelo menos uma opção de compra.",
+            response.context["supplier_formset"].non_form_errors(),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -429,6 +561,7 @@ class ComponentDetailViewTest(TestCase):
     def setUp(self):
         self.user = make_user(permissions=["view_component"])
         self.component = make_component()
+        self.supplier = make_supplier()
         self.url = reverse("component_detail", kwargs={"pk": self.component.pk})
 
     def test_returns_200_for_existing_component(self):
@@ -452,6 +585,20 @@ class ComponentDetailViewTest(TestCase):
         response = self.client.get(self.url + "?sort=title&order=asc")
         self.assertIn("sort=title", response.context["filter_params"])
 
+    def test_detail_displays_component_suppliers(self):
+        ComponentSupplier.objects.create(
+            component=self.component,
+            supplier=self.supplier,
+            serie_number="SUP-001",
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+
+        self.assertContains(response, "Opções de Compra")
+        self.assertContains(response, self.supplier.name)
+        self.assertContains(response, "SUP-001")
+
 
 # ---------------------------------------------------------------------------
 # View tests — ComponentUpdateView
@@ -462,6 +609,8 @@ class ComponentUpdateViewTest(TestCase):
     def setUp(self):
         self.user = make_user(permissions=["change_component"])
         self.component = make_component()
+        self.primary_supplier = make_supplier("Arrow")
+        self.secondary_supplier = make_supplier("RS")
         self.url = reverse("component_update", kwargs={"pk": self.component.pk})
 
     def test_get_returns_200(self):
@@ -470,6 +619,11 @@ class ComponentUpdateViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_post_updates_component(self):
+        supplier_row = ComponentSupplier.objects.create(
+            component=self.component,
+            supplier=self.primary_supplier,
+            serie_number="OLD-001",
+        )
         self.client.force_login(self.user)
         data = {
             "title": "Updated Title",
@@ -480,10 +634,28 @@ class ComponentUpdateViewTest(TestCase):
             "quantity": 200,
             "price": "0.10",
         }
+        data.update(
+            supplier_formset_data(
+                [
+                    {
+                        "suppliers-0-id": str(supplier_row.pk),
+                        "suppliers-0-supplier": str(self.primary_supplier.pk),
+                        "suppliers-0-serie_number": "OLD-001",
+                    },
+                    {
+                        "suppliers-1-supplier": str(self.secondary_supplier.pk),
+                        "suppliers-1-serie_number": "NEW-999",
+                    },
+                ],
+                initial_forms=1,
+            )
+        )
         self.client.post(self.url, data)
         self.component.refresh_from_db()
         self.assertEqual(self.component.title, "Updated Title")
         self.assertEqual(self.component.quantity, 200)
+        self.assertEqual(self.component.suppliers.count(), 2)
+        self.assertEqual(self.component.purchase_options_label, "2 opções de compra")
 
     def test_context_has_all_components_json(self):
         self.client.force_login(self.user)
@@ -499,6 +671,48 @@ class ComponentUpdateViewTest(TestCase):
     def test_anonymous_redirects(self):
         response = self.client.get(self.url)
         self.assertRedirects(response, f"/login/?next={self.url}")
+
+    def test_post_can_delete_existing_supplier_row(self):
+        supplier_row = ComponentSupplier.objects.create(
+            component=self.component,
+            supplier=self.primary_supplier,
+            serie_number="DEL-001",
+        )
+
+        self.client.force_login(self.user)
+        data = {
+            "title": self.component.title,
+            "category": self.component.category.pk,
+            "sub_category": self.component.sub_category.pk,
+            "brand": self.component.brand.pk,
+            "package": self.component.package.pk,
+            "quantity": self.component.quantity,
+            "price": str(self.component.price),
+        }
+        data.update(
+            supplier_formset_data(
+                [
+                    {
+                        "suppliers-0-id": str(supplier_row.pk),
+                        "suppliers-0-supplier": str(self.primary_supplier.pk),
+                        "suppliers-0-serie_number": "DEL-001",
+                        "suppliers-0-DELETE": "on",
+                    },
+                    {
+                        "suppliers-1-supplier": str(self.secondary_supplier.pk),
+                        "suppliers-1-serie_number": "KEEP-123",
+                    },
+                ],
+                initial_forms=1,
+            )
+        )
+
+        self.client.post(self.url, data)
+        self.component.refresh_from_db()
+
+        self.assertFalse(ComponentSupplier.objects.filter(pk=supplier_row.pk).exists())
+        self.assertEqual(self.component.suppliers.count(), 1)
+        self.assertEqual(self.component.purchase_options_label, "1 opção de compra")
 
 
 # ---------------------------------------------------------------------------

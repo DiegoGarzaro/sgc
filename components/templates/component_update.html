@@ -1,333 +1,894 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Editar {{ component.title }} - SGC{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1">Editar Componente</h2>
-        <p class="text-secondary small mb-0">Atualize as informações do componente <strong>{{ component.title }}</strong>.</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{% url 'component_detail' component.id %}" class="btn btn-outline-primary d-flex align-items-center gap-2">
-            <i class="bi bi-eye"></i>
-            <span>Visualizar</span>
-        </a>
-        <a href="{% url 'component_list' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
-            <i class="bi bi-arrow-left"></i>
-            <span>Voltar</span>
-        </a>
-    </div>
-</div>
-
 <form method="post" enctype="multipart/form-data" id="componentForm">
-    {% csrf_token %}
-    
-    {% if form.errors %}
-    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-25 text-danger mb-4">
-        <i class="bi bi-exclamation-circle me-2"></i>
-        Erro ao salvar: verifique os campos destacados abaixo.
-        {{ form.non_field_errors }}
+  {% csrf_token %}
+
+  {% if form.errors or supplier_formset.errors or supplier_formset.non_form_errors %}
+  <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-25 text-danger mb-4">
+    <i class="bi bi-exclamation-circle me-2"></i>
+    Erro ao salvar. Revise os campos destacados antes de continuar.
+    {{ form.non_field_errors }}
+  </div>
+  {% endif %}
+
+  <div class="comp-detail-hero mb-4">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="comp-detail-thumb flex-shrink-0">
+        {% if component.image %}
+        <img src="{{ component.image.url }}" alt="{{ component.title }}" class="rounded edit-thumb-image">
+        {% else %}
+        <div class="rounded d-flex align-items-center justify-content-center edit-thumb-placeholder">
+          <i class="bi bi-cpu text-primary edit-thumb-icon"></i>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="flex-grow-1 min-width-0">
+        <div class="edit-hero-kicker">Edição de componente</div>
+        <h2 class="fw-bold mb-2 lh-1">Editar {{ component.title }}</h2>
+        <p class="edit-hero-subtitle mb-0">
+          Atualize informações técnicas, opções de compra, equivalentes, estoque e arquivos do componente.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2 align-items-center mt-3">
+          <span class="comp-badge comp-badge-primary">{{ component.category.name }}</span>
+          <span class="comp-badge comp-badge-muted">{{ component.sub_category.name }}</span>
+          {% if component.brand.name %}
+          <span class="comp-badge comp-badge-muted">
+            <i class="bi bi-shop me-1"></i>{{ component.brand.name }}
+          </span>
+          {% endif %}
+          {% if component.package.name %}
+          <span class="comp-badge comp-badge-muted">
+            <i class="bi bi-motherboard me-1"></i>{{ component.package.name }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 flex-shrink-0 flex-wrap">
+        <a
+          href="{% url 'component_detail' component.id %}{% if filter_params %}?{{ filter_params }}{% endif %}"
+          class="btn btn-sm btn-outline-primary"
+        >
+          <i class="bi bi-eye me-1"></i>Visualizar
+        </a>
+        <a
+          href="{% url 'component_list' %}{% if filter_params %}?{{ filter_params }}{% endif %}"
+          class="btn btn-sm btn-outline-secondary"
+        >
+          <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+      </div>
     </div>
-    {% endif %}
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <!-- Basic Info Card -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h5 class="fw-bold mb-0">Informações Técnicas</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label for="{{ form.title.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Título do Componente</label>
-                            <input type="text" name="title" id="{{ form.title.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" value="{{ form.title.value }}" required>
-                            {{ form.title.errors }}
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ form.category.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Categoria</label>
-                            <select name="category" id="id_category" class="form-select bg-secondary bg-opacity-10 border-0 text-white p-3" required>
-                                {% for choice in form.category.field.choices %}
-                                    <option value="{{ choice.0 }}" {% if form.category.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
-                                {% endfor %}
-                            </select>
-                            {{ form.category.errors }}
-                        </div>
-                        <div class="col-md-6">
-                            <label for="subCategory" class="form-label text-secondary small uppercase fw-bold">Sub-Categoria</label>
-                            <select id="subCategory" name="sub_category" class="form-select bg-secondary bg-opacity-10 border-0 text-white p-3">
-                                <option value="">Carregando...</option>
-                            </select>
-                            {{ form.sub_category.errors }}
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ form.brand.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Marca/Fabricante</label>
-                            <select name="brand" id="{{ form.brand.id_for_label }}" class="form-select bg-secondary bg-opacity-10 border-0 text-white p-3" required>
-                                {% for choice in form.brand.field.choices %}
-                                    <option value="{{ choice.0 }}" {% if form.brand.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
-                                {% endfor %}
-                            </select>
-                            {{ form.brand.errors }}
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ form.package.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Encapsulamento</label>
-                            <select name="package" id="{{ form.package.id_for_label }}" class="form-select bg-secondary bg-opacity-10 border-0 text-white p-3" required>
-                                {% for choice in form.package.field.choices %}
-                                    <option value="{{ choice.0 }}" {% if form.package.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
-                                {% endfor %}
-                            </select>
-                            {{ form.package.errors }}
-                        </div>
-                    </div>
-                </div>
+    <div class="comp-stats-bar mt-4">
+      <div class="comp-stat-pill">
+        <div class="comp-stat-pill-label">Preço unit.</div>
+        <div class="comp-stat-pill-val" id="heroPriceValue">R$ {{ form.price.value|default:"0.00" }}</div>
+      </div>
+      <div class="comp-stat-pill">
+        <div class="comp-stat-pill-label">Em estoque</div>
+        <div class="comp-stat-pill-val" id="heroQuantityValue">{{ form.quantity.value|default:0 }} un.</div>
+      </div>
+      <div class="comp-stat-pill">
+        <div class="comp-stat-pill-label">Valor total</div>
+        <div class="comp-stat-pill-val" id="heroTotalValue">R$ {{ component.total_value|default:"0.00" }}</div>
+      </div>
+      <div class="comp-stat-pill">
+        <div class="comp-stat-pill-label">Compra</div>
+        <div class="comp-stat-pill-val edit-stat-wrap">
+          {{ component.purchase_options_label|default:component.location|default:"Sem opções" }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-8">
+      <div class="detail-section mb-4">
+        <div class="detail-section-header">
+          <i class="bi bi-sliders text-primary"></i>
+          <span>Informações Técnicas</span>
+        </div>
+        <div class="detail-section-body">
+          <div class="edit-form-grid">
+            <div class="edit-field edit-field-full">
+              <label for="{{ form.title.id_for_label }}" class="component-edit-label">Título do componente</label>
+              <input
+                type="text"
+                name="title"
+                id="{{ form.title.id_for_label }}"
+                class="form-control component-edit-input"
+                value="{{ form.title.value|default:'' }}"
+                placeholder="Ex: Resistor 10k 1/4W"
+                required
+              >
+              {{ form.title.errors }}
             </div>
 
-            <!-- Relationships & Equivalents -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0">Componentes Equivalentes</h5>
-                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" id="addEquivalent">
-                        <i class="bi bi-plus-lg me-1"></i> Adicionar
-                    </button>
-                </div>
-                <div class="card-body p-4">
-                    <div id="equivalentContainer" class="d-flex flex-column gap-2">
-                        <!-- Dynamic items here -->
-                    </div>
-                    <div id="no-equivalents-msg" class="text-center py-3 text-secondary small {% if component.equivalents.exists %}d-none{% endif %}">
-                        Nenhum componente equivalente definido.
-                    </div>
-                </div>
+            <div class="edit-field">
+              <label for="id_category" class="component-edit-label">Categoria</label>
+              <select name="category" id="id_category" class="form-select component-edit-input" required>
+                {% for choice in form.category.field.choices %}
+                <option value="{{ choice.0 }}" {% if form.category.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                  {{ choice.1 }}
+                </option>
+                {% endfor %}
+              </select>
+              {{ form.category.errors }}
             </div>
 
-            <!-- Description & Notes -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h5 class="fw-bold mb-0">Descrição e Localização</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label for="{{ form.description.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Descrição</label>
-                            <textarea name="description" id="{{ form.description.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" rows="4">{{ form.description.value|default:'' }}</textarea>
-                            {{ form.description.errors }}
-                        </div>
-                        <div class="col-12">
-                            <label for="{{ form.location.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Localização</label>
-                            <input type="text" name="location" id="{{ form.location.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" value="{{ form.location.value|default:'' }}">
-                            {{ form.location.errors }}
-                        </div>
-                    </div>
-                </div>
+            <div class="edit-field">
+              <label for="subCategory" class="component-edit-label">Subcategoria</label>
+              <select id="subCategory" name="sub_category" class="form-select component-edit-input">
+                <option value="">Carregando...</option>
+              </select>
+              {{ form.sub_category.errors }}
             </div>
+
+            <div class="edit-field">
+              <label for="{{ form.brand.id_for_label }}" class="component-edit-label">Marca / Fabricante</label>
+              <select name="brand" id="{{ form.brand.id_for_label }}" class="form-select component-edit-input" required>
+                {% for choice in form.brand.field.choices %}
+                <option value="{{ choice.0 }}" {% if form.brand.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                  {{ choice.1 }}
+                </option>
+                {% endfor %}
+              </select>
+              {{ form.brand.errors }}
+            </div>
+
+            <div class="edit-field">
+              <label for="{{ form.package.id_for_label }}" class="component-edit-label">Encapsulamento</label>
+              <select name="package" id="{{ form.package.id_for_label }}" class="form-select component-edit-input" required>
+                {% for choice in form.package.field.choices %}
+                <option value="{{ choice.0 }}" {% if form.package.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                  {{ choice.1 }}
+                </option>
+                {% endfor %}
+              </select>
+              {{ form.package.errors }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% include 'components/_component_supplier_formset.html' %}
+
+      <div class="detail-section mb-4">
+        <div class="detail-section-header detail-section-header-split">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-left-right text-primary"></i>
+            <span>Componentes Equivalentes</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="addEquivalent">
+            <i class="bi bi-plus-lg me-1"></i>Adicionar
+          </button>
+        </div>
+        <div class="detail-section-body">
+          <p class="edit-note">
+            Relacione opções compatíveis para facilitar substituição, manutenção e compras futuras.
+          </p>
+          <div id="equivalentContainer" class="component-edit-equivalent-list"></div>
+          <div id="no-equivalents-msg" class="component-edit-empty-state {% if component.equivalents.exists %}d-none{% endif %}">
+            Nenhum componente equivalente definido.
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section mb-4">
+        <div class="detail-section-header">
+          <i class="bi bi-file-text text-primary"></i>
+          <span>Descrição e Localização</span>
+        </div>
+        <div class="detail-section-body">
+          <div class="edit-form-grid">
+            <div class="edit-field edit-field-full">
+              <label for="{{ form.description.id_for_label }}" class="component-edit-label">Descrição</label>
+              <textarea
+                name="description"
+                id="{{ form.description.id_for_label }}"
+                class="form-control component-edit-input component-edit-textarea"
+                rows="6"
+                placeholder="Informações técnicas, observações e contexto de uso."
+              >{{ form.description.value|default:'' }}</textarea>
+              {{ form.description.errors }}
+            </div>
+
+            <div class="edit-field edit-field-full">
+              <label for="{{ form.location.id_for_label }}" class="component-edit-label">Localização física</label>
+              <input
+                type="text"
+                name="location"
+                id="{{ form.location.id_for_label }}"
+                class="form-control component-edit-input"
+                value="{{ form.location.value|default:'' }}"
+                placeholder="Ex: Gaveta A-1, caixa ESD 2"
+              >
+              {{ form.location.errors }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <div class="edit-sidebar">
+        <div class="detail-section mb-4">
+          <div class="detail-section-header">
+            <i class="bi bi-box-seam text-primary"></i>
+            <span>Estoque</span>
+          </div>
+          <div class="detail-section-body">
+            <div class="edit-field mb-3">
+              <label for="{{ form.quantity.id_for_label }}" class="component-edit-label">Quantidade</label>
+              <input
+                type="number"
+                name="quantity"
+                id="{{ form.quantity.id_for_label }}"
+                class="form-control component-edit-input"
+                value="{{ form.quantity.value|default:0 }}"
+                min="0"
+                required
+              >
+              {{ form.quantity.errors }}
+            </div>
+
+            <div class="edit-field mb-4">
+              <label for="{{ form.price.id_for_label }}" class="component-edit-label">Preço unitário (R$)</label>
+              <input
+                type="number"
+                step="0.01"
+                name="price"
+                id="{{ form.price.id_for_label }}"
+                class="form-control component-edit-input"
+                value="{{ form.price.value|default:0 }}"
+                min="0"
+                required
+              >
+              {{ form.price.errors }}
+            </div>
+
+            <div class="edit-info-list">
+              <div class="edit-info-row">
+                <span>Valor total estimado</span>
+                <strong id="inventoryTotalValue">R$ {{ component.total_value|default:"0.00" }}</strong>
+              </div>
+              <div class="edit-info-row">
+                <span>Status</span>
+                <strong id="inventoryStatusLabel">
+                  {% if component.quantity == 0 %}
+                  Sem estoque
+                  {% elif component.quantity < 5 %}
+                  Estoque baixo
+                  {% else %}
+                  Estoque saudável
+                  {% endif %}
+                </strong>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="col-lg-4">
-            <!-- Inventory Status -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h5 class="fw-bold mb-0">Inventário</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="mb-3">
-                        <label for="{{ form.quantity.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Quantidade</label>
-                        <input type="number" name="quantity" id="{{ form.quantity.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" value="{{ form.quantity.value }}" required>
-                        {{ form.quantity.errors }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ form.price.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Preço (R$)</label>
-                        <input type="number" step="0.01" name="price" id="{{ form.price.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" value="{{ form.price.value }}" required>
-                        {{ form.price.errors }}
-                    </div>
-                    <div>
-                        <label for="{{ form.serie_number.id_for_label }}" class="form-label text-secondary small uppercase fw-bold">Série / Part Number</label>
-                        <input type="text" name="serie_number" id="{{ form.serie_number.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-white p-3" value="{{ form.serie_number.value|default:'' }}">
-                        {{ form.serie_number.errors }}
-                    </div>
-                </div>
+        <div class="detail-section mb-4">
+          <div class="detail-section-header">
+            <i class="bi bi-image text-primary"></i>
+            <span>Mídia e Documentação</span>
+          </div>
+          <div class="detail-section-body">
+            <div class="edit-media-preview mb-4">
+              {% if component.image %}
+              <img
+                src="{{ component.image.url }}"
+                alt="{{ component.title }}"
+                id="componentImagePreview"
+                class="img-fluid rounded w-100"
+                style="max-height:220px;object-fit:contain;"
+              >
+              {% else %}
+              <div id="componentImagePreview" class="edit-media-empty">
+                <i class="bi bi-image"></i>
+                <span>Sem imagem cadastrada</span>
+              </div>
+              {% endif %}
             </div>
 
-            <!-- Media -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h5 class="fw-bold mb-0">Mídia</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label text-secondary small uppercase fw-bold">Imagem Atual</label>
-                        {% if component.image %}
-                            <img src="{{ component.image.url }}" class="img-fluid rounded mb-2 d-block mx-auto" style="max-height: 150px;">
-                        {% endif %}
-                        <input type="file" name="image" id="{{ form.image.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-secondary">
-                    </div>
-                    <div>
-                        <label class="form-label text-secondary small uppercase fw-bold">Folha de Dados (PDF)</label>
-                        {% if component.datasheet %}
-                            <div class="alert alert-dark border-0 small py-2 d-flex align-items-center gap-2">
-                                <i class="bi bi-file-earmark-pdf text-danger"></i>
-                                <span class="text-truncate">{{ component.datasheet.name }}</span>
-                            </div>
-                        {% endif %}
-                        <input type="file" name="datasheet" id="{{ form.datasheet.id_for_label }}" class="form-control bg-secondary bg-opacity-10 border-0 text-secondary">
-                    </div>
-                </div>
+            <div class="edit-field mb-4">
+              <label for="{{ form.image.id_for_label }}" class="component-edit-label">Nova imagem</label>
+              <input type="file" name="image" id="{{ form.image.id_for_label }}" class="form-control component-edit-input" accept="image/*">
+              {{ form.image.errors }}
             </div>
 
-            <!-- Actions -->
-            <div class="card border-0 shadow-sm bg-primary bg-opacity-10 border border-primary border-opacity-10">
-                <div class="card-body p-4">
-                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2">
-                        <i class="bi bi-save fs-5"></i>
-                        <span>Salvar Alterações</span>
-                    </button>
-                    <a href="{% url 'component_detail' component.id %}" class="btn btn-link w-100 mt-2 text-secondary text-decoration-none small">
-                        Cancelar e descartar
-                    </a>
-                </div>
+            <div class="edit-field">
+              <label for="{{ form.datasheet.id_for_label }}" class="component-edit-label">Datasheet</label>
+              {% if component.datasheet %}
+              <div class="edit-file-chip">
+                <i class="bi bi-file-earmark-pdf text-danger"></i>
+                <a href="{{ component.datasheet.url }}" target="_blank" class="text-decoration-none text-light">
+                  {{ component.datasheet.name }}
+                </a>
+              </div>
+              {% else %}
+              <div class="edit-note mb-2">Nenhum arquivo enviado.</div>
+              {% endif %}
+              <input type="file" name="datasheet" id="{{ form.datasheet.id_for_label }}" class="form-control component-edit-input" accept=".pdf,.doc,.docx,.xls,.xlsx">
+              {{ form.datasheet.errors }}
             </div>
+          </div>
         </div>
+
+        <div class="detail-section">
+          <div class="detail-section-header">
+            <i class="bi bi-check2-circle text-primary"></i>
+            <span>Salvar Alterações</span>
+          </div>
+          <div class="detail-section-body">
+            <p class="edit-note mb-4">
+              Revise os campos alterados e salve para atualizar o componente no inventário.
+            </p>
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold mb-3">
+              <i class="bi bi-check2-circle me-2"></i>Salvar alterações
+            </button>
+            <a
+              href="{% url 'component_detail' component.id %}{% if filter_params %}?{{ filter_params }}{% endif %}"
+              class="btn btn-outline-secondary w-100"
+            >
+              Cancelar
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </form>
 
-<!-- Data for JS -->
-<script type="application/json" id="allComponentsData">
-  {{ all_components_json|safe }}
-</script>
-<script type="application/json" id="existingEquivalentsData">
-  {{ existing_equivalents_json|safe }}
-</script>
-<script type="application/json" id="currentSubcategoryData">
-  {{ current_subcategory|default:'null'|safe }}
-</script>
+<script type="application/json" id="allComponentsData">{{ all_components_json|safe }}</script>
+<script type="application/json" id="existingEquivalentsData">{{ existing_equivalents_json|safe }}</script>
+<script type="application/json" id="currentSubcategoryData">{{ current_subcategory|default:'null'|safe }}</script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const equivalentContainer = document.getElementById('equivalentContainer');
-    const addEquivalentBtn = document.getElementById('addEquivalent');
-    const noEquivMsg = document.getElementById('no-equivalents-msg');
-    const selectedComponents = new Set();
-    const allComponents = JSON.parse(document.getElementById('allComponentsData').textContent);
+document.addEventListener('DOMContentLoaded', function () {
+  const equivalentContainer = document.getElementById('equivalentContainer');
+  const addEquivalentBtn = document.getElementById('addEquivalent');
+  const noEquivMsg = document.getElementById('no-equivalents-msg');
+  const selectedComponents = new Set();
+  const allComponents = JSON.parse(document.getElementById('allComponentsData').textContent);
 
-    const categorySelect = document.getElementById('id_category');
-    const subCategorySelect = document.getElementById('subCategory');
-    const currentSubcategoryData = JSON.parse(document.getElementById('currentSubcategoryData').textContent);
+  const categorySelect = document.getElementById('id_category');
+  const subCategorySelect = document.getElementById('subCategory');
+  const currentSubcategoryData = JSON.parse(document.getElementById('currentSubcategoryData').textContent);
+  const quantityInput = document.getElementById('{{ form.quantity.id_for_label }}');
+  const priceInput = document.getElementById('{{ form.price.id_for_label }}');
+  const inventoryTotalValue = document.getElementById('inventoryTotalValue');
+  const inventoryStatusLabel = document.getElementById('inventoryStatusLabel');
+  const heroPriceValue = document.getElementById('heroPriceValue');
+  const heroQuantityValue = document.getElementById('heroQuantityValue');
+  const heroTotalValue = document.getElementById('heroTotalValue');
+  const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+  const imagePreview = document.getElementById('componentImagePreview');
 
-    categorySelect.addEventListener('change', function () {
-      updateSubcategories(this.value, false); 
-    });
+  categorySelect.addEventListener('change', function () {
+    updateSubcategories(this.value, false);
+  });
 
-    async function updateSubcategories(categoryId, initialLoad = false) {
-      if (!categoryId) {
-        subCategorySelect.innerHTML = '<option value="">-</option>';
+  async function updateSubcategories(categoryId, initialLoad = false) {
+    if (!categoryId) {
+      subCategorySelect.innerHTML = '<option value="">-</option>';
+      return;
+    }
+
+    try {
+      const response = await fetch(`/ajax/load-subcategories/?category_id=${categoryId}`);
+      const subcategories = await response.json();
+
+      subCategorySelect.innerHTML = '<option value="">- Selecione uma sub-categoria -</option>';
+      subcategories.forEach((subcategory) => {
+        const option = document.createElement('option');
+        option.value = subcategory.id;
+        option.textContent = subcategory.name;
+        if (initialLoad && currentSubcategoryData && subcategory.id === currentSubcategoryData.id) {
+          option.selected = true;
+        }
+        subCategorySelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Erro ao buscar subcategorias:', error);
+      subCategorySelect.innerHTML = '<option value="">Erro ao carregar</option>';
+    }
+  }
+
+  if (categorySelect.value) {
+    updateSubcategories(categorySelect.value, true);
+  }
+
+  function formatCurrency(value) {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value || 0);
+  }
+
+  function updateInventoryPreview() {
+    const quantity = Number.parseFloat(quantityInput.value || '0') || 0;
+    const price = Number.parseFloat(priceInput.value || '0') || 0;
+    const total = quantity * price;
+
+    inventoryTotalValue.textContent = formatCurrency(total);
+    heroPriceValue.textContent = formatCurrency(price);
+    heroQuantityValue.textContent = `${quantity} un.`;
+    heroTotalValue.textContent = formatCurrency(total);
+
+    heroQuantityValue.classList.remove('text-danger', 'text-warning', 'text-success');
+    if (quantity === 0) {
+      inventoryStatusLabel.textContent = 'Sem estoque';
+      heroQuantityValue.classList.add('text-danger');
+    } else if (quantity < 5) {
+      inventoryStatusLabel.textContent = 'Estoque baixo';
+      heroQuantityValue.classList.add('text-warning');
+    } else {
+      inventoryStatusLabel.textContent = 'Estoque saudável';
+      heroQuantityValue.classList.add('text-success');
+    }
+  }
+
+  quantityInput.addEventListener('input', updateInventoryPreview);
+  priceInput.addEventListener('input', updateInventoryPreview);
+  updateInventoryPreview();
+
+  if (imageInput && imagePreview) {
+    imageInput.addEventListener('change', function () {
+      const file = this.files && this.files[0];
+      if (!file) {
         return;
       }
 
-      try {
-        const response = await fetch(`/ajax/load-subcategories/?category_id=${categoryId}`);
-        const subcategories = await response.json();
-
-        subCategorySelect.innerHTML = '<option value="">- Selecione uma sub-categoria -</option>';
-        subcategories.forEach(subcategory => {
-          const option = document.createElement('option');
-          option.value = subcategory.id;
-          option.textContent = subcategory.name;
-          if (initialLoad && currentSubcategoryData && subcategory.id === currentSubcategoryData.id) {
-            option.selected = true;
-          }
-          subCategorySelect.appendChild(option);
-        });
-      } catch (error) {
-        console.error('Error fetching subcategories:', error);
-        subCategorySelect.innerHTML = '<option value="">Erro ao carregar</option>';
-      }
-    }
-
-    if (categorySelect.value) {
-      updateSubcategories(categorySelect.value, true);
-    }
-
-    function createEquivalentSelect(selectedValue = '') {
-      noEquivMsg.classList.add('d-none');
-      const item = document.createElement('div');
-      item.className = 'd-flex align-items-center gap-2';
-
-      const select = document.createElement('select');
-      select.className = 'form-select bg-secondary bg-opacity-10 border-0 text-white p-2 equivalent-select';
-      select.name = 'equivalent[]';
-
-      const options = generateOptions(selectedValue);
-      select.innerHTML = options;
-
-      if (selectedValue) {
-        select.value = selectedValue;
-        selectedComponents.add(selectedValue);
-      }
-
-      select.addEventListener('change', function () {
-        const prev = select.getAttribute('data-prev');
-        if (prev) selectedComponents.delete(prev);
-        if (select.value) selectedComponents.add(select.value);
-        select.setAttribute('data-prev', select.value);
-        updateAllDropdowns();
-      });
-
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.className = 'btn btn-outline-danger btn-sm border-0';
-      removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
-
-      removeBtn.addEventListener('click', function () {
-        if (select.value) selectedComponents.delete(select.value);
-        item.remove();
-        if (equivalentContainer.children.length === 0) noEquivMsg.classList.remove('d-none');
-        updateAllDropdowns();
-      });
-
-      item.appendChild(select);
-      item.appendChild(removeBtn);
-      return item;
-    }
-
-    function generateOptions(selectedValue) {
-      let options = '<option value="">Escolher equivalente...</option>';
-      allComponents.forEach(c => {
-        const isSelected = selectedComponents.has(c.id.toString());
-        const isCurrent = selectedValue === c.id.toString();
-        if (!isSelected || isCurrent) {
-          options += `<option value="${c.id}">${c.title} (${c.serie_number || 'S/N'})</option>`;
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        if (imagePreview.tagName === 'IMG') {
+          imagePreview.src = event.target.result;
+          return;
         }
-      });
-      return options;
+
+        imagePreview.innerHTML = `<img src="${event.target.result}" alt="Pré-visualização" class="img-fluid rounded w-100" style="max-height:220px;object-fit:contain;">`;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function createEquivalentSelect(selectedValue = '') {
+    noEquivMsg.classList.add('d-none');
+
+    const item = document.createElement('div');
+    item.className = 'component-edit-equivalent-row';
+
+    const content = document.createElement('div');
+    content.className = 'component-edit-equivalent-main';
+
+    const label = document.createElement('div');
+    label.className = 'component-edit-label';
+    label.textContent = 'Componente equivalente';
+
+    const select = document.createElement('select');
+    select.className = 'form-select component-edit-input equivalent-select';
+    select.name = 'equivalent[]';
+    select.innerHTML = generateOptions(selectedValue);
+
+    if (selectedValue) {
+      select.value = selectedValue;
+      selectedComponents.add(selectedValue);
+      select.setAttribute('data-prev', selectedValue);
     }
 
-    function updateAllDropdowns() {
-      document.querySelectorAll('.equivalent-select').forEach(s => {
-        const val = s.value;
-        s.innerHTML = generateOptions(val);
-        s.value = val;
-      });
-    }
-
-    addEquivalentBtn.addEventListener('click', function () {
-      equivalentContainer.appendChild(createEquivalentSelect());
+    select.addEventListener('change', function () {
+      const previousValue = select.getAttribute('data-prev');
+      if (previousValue) {
+        selectedComponents.delete(previousValue);
+      }
+      if (select.value) {
+        selectedComponents.add(select.value);
+      }
+      select.setAttribute('data-prev', select.value);
       updateAllDropdowns();
     });
 
-    const existing = JSON.parse(document.getElementById('existingEquivalentsData').textContent || '[]');
-    existing.forEach(e => {
-        equivalentContainer.appendChild(createEquivalentSelect(e.id.toString()));
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-outline-danger component-edit-equivalent-remove';
+    removeBtn.innerHTML = '<i class="bi bi-trash"></i><span>Remover</span>';
+
+    removeBtn.addEventListener('click', function () {
+      if (select.value) {
+        selectedComponents.delete(select.value);
+      }
+      item.remove();
+      if (!equivalentContainer.children.length) {
+        noEquivMsg.classList.remove('d-none');
+      }
+      updateAllDropdowns();
     });
+
+    content.appendChild(label);
+    content.appendChild(select);
+    item.appendChild(content);
+    item.appendChild(removeBtn);
+
+    return item;
+  }
+
+  function generateOptions(selectedValue) {
+    let options = '<option value="">Escolher equivalente...</option>';
+    allComponents.forEach((component) => {
+      const isSelected = selectedComponents.has(component.id.toString());
+      const isCurrent = selectedValue === component.id.toString();
+
+      if (!isSelected || isCurrent) {
+        options += `<option value="${component.id}">${component.title} (${component.serie_number || 'S/N'})</option>`;
+      }
+    });
+    return options;
+  }
+
+  function updateAllDropdowns() {
+    document.querySelectorAll('.equivalent-select').forEach((select) => {
+      const currentValue = select.value;
+      select.innerHTML = generateOptions(currentValue);
+      select.value = currentValue;
+    });
+  }
+
+  addEquivalentBtn.addEventListener('click', function () {
+    equivalentContainer.appendChild(createEquivalentSelect());
+    updateAllDropdowns();
   });
+
+  const existing = JSON.parse(document.getElementById('existingEquivalentsData').textContent || '[]');
+  existing.forEach((equivalent) => {
+    equivalentContainer.appendChild(createEquivalentSelect(equivalent.id.toString()));
+  });
+
+  if (!equivalentContainer.children.length) {
+    noEquivMsg.classList.remove('d-none');
+  }
+});
 </script>
 
 <style>
-.uppercase { text-transform: uppercase; letter-spacing: 0.05em; }
-.form-control:focus, .form-select:focus {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    box-shadow: none;
-    border: 1px solid var(--bs-primary) !important;
+.comp-detail-hero {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.edit-thumb-image,
+.edit-thumb-placeholder {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+}
+
+.edit-thumb-placeholder {
+  background: rgba(13, 110, 253, 0.15);
+}
+
+.edit-thumb-icon {
+  font-size: 1.5rem;
+}
+
+.edit-hero-kicker {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--secondary-color);
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.edit-hero-subtitle {
+  color: var(--secondary-color);
+  max-width: 760px;
+}
+
+.comp-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+}
+
+.comp-stat-pill {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.comp-stat-pill-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary-color);
+  white-space: nowrap;
+}
+
+.comp-stat-pill-val {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #e8e8e8;
+  white-space: nowrap;
+}
+
+.edit-stat-wrap {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.detail-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.detail-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--secondary-color);
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.detail-section-header-split {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.detail-section-body {
+  padding: 1.25rem;
+}
+
+.edit-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.edit-field-full {
+  grid-column: 1 / -1;
+}
+
+.component-edit-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--secondary-color);
+  font-weight: 700;
+}
+
+.component-edit-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border-color) !important;
+  color: #f3f5f7 !important;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+}
+
+.component-edit-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.component-edit-textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.edit-note {
+  color: var(--secondary-color);
+  font-size: 0.92rem;
+}
+
+.edit-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.edit-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+}
+
+.edit-info-row span {
+  color: var(--secondary-color);
+  font-size: 0.9rem;
+}
+
+.edit-media-preview {
+  padding: 0.75rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+}
+
+.edit-media-empty {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-radius: 12px;
+  border: 1px dashed var(--border-color);
+  color: var(--secondary-color);
+}
+
+.edit-media-empty i {
+  font-size: 1.8rem;
+}
+
+.edit-file-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  margin-bottom: 0.75rem;
+  word-break: break-all;
+}
+
+.component-edit-empty-state {
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  color: var(--secondary-color);
+  margin-top: 0.75rem;
+}
+
+.component-edit-equivalent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.component-edit-equivalent-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+}
+
+.component-edit-equivalent-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.component-edit-equivalent-remove {
+  min-width: 116px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.85rem 1rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.14);
+  border-color: rgba(13, 110, 253, 0.55) !important;
+}
+
+.comp-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.2em 0.65em;
+  border-radius: 999px;
+  line-height: 1.5;
+}
+
+.comp-badge-primary {
+  background: rgba(13, 110, 253, 0.15);
+  color: #5b9cfd;
+  border: 1px solid rgba(13, 110, 253, 0.25);
+}
+
+.comp-badge-muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: #adb5bd;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (min-width: 1200px) {
+  .edit-sidebar {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+@media (max-width: 991px) {
+  .comp-stats-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .detail-section-body,
+  .detail-section-header,
+  .comp-detail-hero {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .edit-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-field-full {
+    grid-column: auto;
+  }
+
+  .component-edit-equivalent-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .component-edit-equivalent-remove {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .comp-stats-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-section-header-split .btn,
+  .comp-detail-hero .btn {
+    width: 100%;
+  }
 }
 </style>
 {% endblock %}

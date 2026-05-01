@@ -3,159 +3,414 @@
 {% block title %}{{ component.title }} - SGC{% endblock %}
 
 {% block content %}
-<div class="container-fluid container-lg mt-4">
-  <!-- Header -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-    <div>
-      <h2 class="fw-bold mb-1">{{ component.title }}</h2>
-      <p class="text-secondary small mb-0">Visualizando informações detalhadas do componente.</p>
+
+{# ── Hero header ─────────────────────────────────────────────────────────── #}
+<div class="comp-detail-hero mb-4">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+
+    {# Thumbnail #}
+    <div class="comp-detail-thumb flex-shrink-0">
+      {% if object.image %}
+      <img src="{{ object.image.url }}" alt="{{ object.title }}" class="rounded"
+           style="width:56px;height:56px;object-fit:cover;">
+      {% else %}
+      <div class="rounded d-flex align-items-center justify-content-center"
+           style="width:56px;height:56px;background:rgba(13,110,253,0.15);">
+        <i class="bi bi-cpu text-primary" style="font-size:1.5rem;"></i>
+      </div>
+      {% endif %}
     </div>
-    <a href="{% url 'component_list' %}{% if filter_params %}?{{ filter_params }}{% endif %}" class="btn btn-outline-light">
-      <i class="bi bi-arrow-left me-2"></i> Voltar para Lista
-    </a>
+
+    {# Title + badges #}
+    <div class="flex-grow-1 min-width-0">
+      <h2 class="fw-bold mb-1 lh-1">{{ object.title }}</h2>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="comp-badge comp-badge-primary">{{ object.category.name }}</span>
+        <span class="comp-badge comp-badge-muted">{{ object.sub_category.name }}</span>
+        {% if object.brand.name %}
+        <span class="comp-badge comp-badge-muted">
+          <i class="bi bi-shop me-1"></i>{{ object.brand.name }}
+        </span>
+        {% endif %}
+        {% if object.package.name %}
+        <span class="comp-badge comp-badge-muted">
+          <i class="bi bi-motherboard me-1"></i>{{ object.package.name }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Action buttons #}
+    <div class="d-flex gap-2 flex-shrink-0 flex-wrap">
+      <a href="{% url 'component_list' %}{% if filter_params %}?{{ filter_params }}{% endif %}"
+         class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+      </a>
+      {% if perms.components.change_component %}
+      <a href="{% url 'component_update' object.id %}" class="btn btn-sm btn-warning">
+        <i class="bi bi-pencil me-1"></i>Editar
+      </a>
+      {% endif %}
+      {% if perms.components.delete_component %}
+      <a href="{% url 'component_delete' object.id %}" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-trash me-1"></i>Excluir
+      </a>
+      {% endif %}
+    </div>
   </div>
 
-  <div class="card bg-dark text-light border-secondary">
-    <div class="card-body">
-      <div class="row g-4">
+  {# Quick stats bar #}
+  <div class="comp-stats-bar mt-4">
+    <div class="comp-stat-pill">
+      <div class="comp-stat-pill-label">Preço unit.</div>
+      <div class="comp-stat-pill-val">R$ {{ object.price|default:"0.00" }}</div>
+    </div>
+    <div class="comp-stat-pill">
+      <div class="comp-stat-pill-label">Em estoque</div>
+      <div class="comp-stat-pill-val {% if object.quantity == 0 %}text-danger{% elif object.quantity < 5 %}text-warning{% else %}text-success{% endif %}">
+        {{ object.quantity }} un.
+      </div>
+    </div>
+    <div class="comp-stat-pill">
+      <div class="comp-stat-pill-label">Valor total</div>
+      <div class="comp-stat-pill-val">R$ {{ object.total_value|default:"0.00" }}</div>
+    </div>
+    {% if object.location %}
+    <div class="comp-stat-pill">
+      <div class="comp-stat-pill-label">Localização</div>
+      <div class="comp-stat-pill-val">{{ object.location }}</div>
+    </div>
+    {% else %}
+    <div class="comp-stat-pill" style="visibility:hidden;"></div>
+    {% endif %}
+  </div>
+</div>
 
-        <!-- Main Info Column -->
-        <div class="col-12 col-lg-8 order-2 order-lg-1">
+{# ── Body: two columns ───────────────────────────────────────────────────── #}
+<div class="row g-4">
 
-          <!-- Classification -->
-          <div class="card bg-dark-subtle border-secondary mb-4">
-            <div class="card-header bg-dark-subtle border-secondary">
-              <h6 class="card-title mb-0">
-                <i class="bi bi-tag me-2 text-primary"></i>Classificação
-              </h6>
-            </div>
-            <div class="card-body">
-              <div class="row row-cols-1 row-cols-sm-2 g-3">
-                <div class="col">
-                  <label class="text-light-emphasis small d-block mb-1"><strong>Categoria</strong></label>
-                  <p class="mb-2">{{ object.category.name }}</p>
-                  <label class="text-light-emphasis small d-block mb-1"><strong>Sub-Categoria</strong></label>
-                  <p class="mb-0">{{ object.sub_category.name }}</p>
-                </div>
-                <div class="col">
-                  <label class="text-light-emphasis small d-block mb-1"><strong>Encapsulamento</strong></label>
-                  <p class="mb-2">{{ object.package.name }}</p>
-                  <label class="text-light-emphasis small d-block mb-1"><strong>Marca</strong></label>
-                  <p class="mb-0">{{ object.brand.name }}</p>
-                </div>
-              </div>
-            </div>
+  {# ── Left: description + equivalents ──────────────────────────────────── #}
+  <div class="col-12 col-lg-8">
+
+    {# Description #}
+    <div class="detail-section mb-4">
+      <div class="detail-section-header">
+        <i class="bi bi-file-text text-primary"></i>
+        <span>Descrição</span>
+      </div>
+      <div class="detail-section-body">
+        {% if object.description %}
+        <p class="mb-0" style="line-height:1.7;">{{ object.description }}</p>
+        {% else %}
+        <p class="mb-0 text-secondary fst-italic">Sem descrição disponível.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Classification details #}
+    <div class="detail-section mb-4">
+      <div class="detail-section-header">
+        <i class="bi bi-tag text-primary"></i>
+        <span>Classificação</span>
+      </div>
+      <div class="detail-section-body">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <span class="detail-field-label">Categoria</span>
+            <span class="detail-field-val">{{ object.category.name|default:"—" }}</span>
           </div>
-
-          <!-- Inventory -->
-          <div class="card bg-dark-subtle border-secondary mb-4">
-            <div class="card-header bg-dark-subtle border-secondary">
-              <h6 class="card-title mb-0">
-                <i class="bi bi-box-seam me-2 text-primary"></i>Informações de Estoque
-              </h6>
-            </div>
-            <div class="card-body">
-              <div class="row row-cols-1 row-cols-sm-2 g-3">
-                <div class="col">
-                  <label class="text-light-emphasis small d-block mb-1"><strong>Número de Série</strong></label>
-                  <p class="mb-2">{{ object.serie_number|default:"—" }}</p>
-                  <label class="text-light-emphasis small d-block mb-1"><strong>Localização</strong></label>
-                  <p class="mb-0">{{ object.location|default:"—" }}</p>
-                </div>
-                <div class="col">
-                  <label class="text-light-emphasis small d-block mb-1"><strong>Preço</strong></label>
-                  <p class="mb-2">R$ {{ object.price|default:"0,00" }}</p>
-                  <label class="text-light-emphasis small d-block mb-1"><strong>Quantidade em Estoque</strong></label>
-                  <p class="mb-0">{{ object.quantity }}</p>
-                </div>
-              </div>
-            </div>
+          <div class="detail-field">
+            <span class="detail-field-label">Subcategoria</span>
+            <span class="detail-field-val">{{ object.sub_category.name|default:"—" }}</span>
           </div>
-
-          <!-- Description -->
-          <div class="card bg-dark-subtle border-secondary">
-            <div class="card-header bg-dark-subtle border-secondary">
-              <h6 class="card-title mb-0">
-                <i class="bi bi-file-text me-2 text-primary"></i>Descrição
-              </h6>
-            </div>
-            <div class="card-body">
-              <p class="card-text mb-0">{{ object.description|default:"Sem descrição disponível." }}</p>
-            </div>
+          <div class="detail-field">
+            <span class="detail-field-label">Encapsulamento</span>
+            <span class="detail-field-val">{{ object.package.name|default:"—" }}</span>
           </div>
-        </div>
-
-        <!-- Media Column -->
-        <div class="col-12 col-lg-4 order-1 order-lg-2">
-
-          <!-- Component Image -->
-          {% if object.image %}
-          <div class="card bg-dark-subtle border-secondary mb-4">
-            <div class="card-body p-2">
-              <img src="{{ object.image.url }}" class="img-fluid rounded" alt="{{ object.title }}">
-              <a href="{{ object.image.url }}" class="btn btn-sm btn-outline-primary w-100 mt-2" target="_blank">
-                <i class="bi bi-arrows-fullscreen"></i> Ampliar
-              </a>
-            </div>
+          <div class="detail-field">
+            <span class="detail-field-label">Fabricante</span>
+            <span class="detail-field-val">{{ object.brand.name|default:"—" }}</span>
           </div>
-          {% endif %}
-
-          <!-- Datasheet -->
-          <div class="card bg-dark-subtle border-secondary mb-4">
-            <div class="card-header bg-dark-subtle border-secondary">
-              <h6 class="card-title mb-0">
-                <i class="bi bi-file-earmark-pdf me-2 text-primary"></i>Documentação Técnica
-              </h6>
-            </div>
-            <div class="card-body">
-              {% if object.datasheet %}
-              <a href="{{ object.datasheet.url }}" class="btn btn-outline-primary w-100" target="_blank">
-                <i class="bi bi-download me-2"></i>Baixar Datasheet
-              </a>
-              {% else %}
-              <p class="mb-0 text-light-emphasis text-center">
-                <i class="bi bi-info-circle me-2"></i>Sem datasheet disponível.
-              </p>
-              {% endif %}
-            </div>
-          </div>
-
-          <!-- Equivalents -->
-          <div class="card bg-dark-subtle border-secondary">
-            <div class="card-header bg-dark-subtle border-secondary">
-              <h6 class="card-title mb-0">
-                <i class="bi bi-arrow-left-right me-2 text-primary"></i>Componentes Equivalentes
-              </h6>
-            </div>
-            <div class="card-body p-0">
-              {% if object.equivalents.all %}
-              <div class="list-group list-group-flush">
-                {% for equivalent in object.equivalents.all %}
-                <a href="{% url 'component_detail' equivalent.pk %}"
-                   class="list-group-item list-group-item-action bg-dark-subtle text-light border-secondary d-flex align-items-center gap-3">
-                  <div class="flex-grow-1">
-                    <span class="fw-bold d-block">{{ equivalent.title }}</span>
-                    <small class="text-light-emphasis">
-                      {{ equivalent.serie_number|default:"Sem número de série" }}
-                    </small>
-                  </div>
-                  <i class="bi bi-chevron-right text-primary"></i>
-                </a>
-                {% endfor %}
-              </div>
-              {% else %}
-              <div class="p-4 text-center">
-                <p class="mb-0 text-light-emphasis">
-                  <i class="bi bi-info-circle me-2"></i>Sem equivalentes disponíveis.
-                </p>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-
         </div>
       </div>
     </div>
+
+    <div class="detail-section mb-4">
+      <div class="detail-section-header">
+        <i class="bi bi-truck text-primary"></i>
+        <span>Opções de Compra</span>
+      </div>
+      <div class="detail-section-body p-0">
+        {% if object.suppliers.all %}
+        <div class="supplier-list">
+          {% for supplier_row in object.suppliers.all %}
+          <div class="supplier-row">
+            <div>
+              <div class="fw-semibold text-white">{{ supplier_row.supplier.name }}</div>
+              <div class="text-secondary small">{{ supplier_row.serie_number|default:"Sem número de série" }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% elif object.serie_number %}
+        <div class="supplier-row">
+          <div>
+            <div class="fw-semibold text-white">Registro legado</div>
+            <div class="text-secondary small">{{ object.serie_number }}</div>
+          </div>
+          <span class="comp-badge comp-badge-muted">Sem fornecedor</span>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-secondary">
+          <i class="bi bi-info-circle me-1"></i> Sem fornecedores cadastrados.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Equivalents #}
+    <div class="detail-section">
+      <div class="detail-section-header">
+        <i class="bi bi-arrow-left-right text-primary"></i>
+        <span>Componentes Equivalentes</span>
+      </div>
+      <div class="detail-section-body p-0">
+        {% if object.equivalents.all %}
+        <div class="equiv-list">
+          {% for eq in object.equivalents.all %}
+          <a href="{% url 'component_detail' eq.pk %}" class="equiv-item">
+            <div class="equiv-icon">
+              {% if eq.image %}
+              <img src="{{ eq.image.url }}" alt="" class="rounded"
+                   style="width:32px;height:32px;object-fit:cover;">
+              {% else %}
+              <i class="bi bi-cpu text-primary"></i>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1 min-width-0">
+              <div class="fw-semibold text-white text-truncate">{{ eq.title }}</div>
+              <div class="text-secondary small">{{ eq.purchase_options_label|default:"—" }}</div>
+            </div>
+            <i class="bi bi-chevron-right text-secondary flex-shrink-0"></i>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-secondary">
+          <i class="bi bi-info-circle me-1"></i> Sem equivalentes cadastrados.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  {# ── Right: image + datasheet ──────────────────────────────────────────── #}
+  <div class="col-12 col-lg-4">
+
+    {# Image card #}
+    {% if object.image %}
+    <div class="detail-section mb-4">
+      <div class="detail-section-header">
+        <i class="bi bi-image text-primary"></i>
+        <span>Imagem</span>
+      </div>
+      <div class="detail-section-body p-2">
+        <img src="{{ object.image.url }}" class="img-fluid rounded w-100"
+             alt="{{ object.title }}" style="max-height:300px;object-fit:contain;">
+        <a href="{{ object.image.url }}" class="btn btn-sm btn-outline-primary w-100 mt-2" target="_blank">
+          <i class="bi bi-arrows-fullscreen me-1"></i>Ampliar
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+    {# Datasheet #}
+    <div class="detail-section">
+      <div class="detail-section-header">
+        <i class="bi bi-file-earmark-pdf text-primary"></i>
+        <span>Documentação Técnica</span>
+      </div>
+      <div class="detail-section-body">
+        {% if object.datasheet %}
+        <a href="{{ object.datasheet.url }}" class="btn btn-outline-primary w-100" target="_blank">
+          <i class="bi bi-download me-2"></i>Baixar Datasheet
+        </a>
+        {% else %}
+        <div class="text-center text-secondary py-2">
+          <i class="bi bi-file-earmark-x d-block mb-1" style="font-size:1.8rem;"></i>
+          <small>Sem datasheet disponível.</small>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
   </div>
 </div>
+
+<style>
+/* ── Hero ────────────────────────────────────── */
+.comp-detail-hero {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+
+/* ── Stats bar (4 squares) ───────────────────── */
+.comp-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+}
+@media (max-width: 576px) {
+  .comp-stats-bar { grid-template-columns: repeat(2, 1fr); }
+}
+
+.comp-stat-pill {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.comp-stat-pill-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary-color);
+  white-space: nowrap;
+}
+.comp-stat-pill-val {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #e8e8e8;
+  white-space: nowrap;
+}
+
+/* ── Section cards ───────────────────────────── */
+.detail-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.detail-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--secondary-color);
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(255,255,255,0.02);
+}
+
+.detail-section-body {
+  padding: 1.25rem;
+}
+
+/* ── Classification grid ─────────────────────── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 576px) {
+  .detail-grid { grid-template-columns: 1fr; }
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.detail-field-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--secondary-color);
+}
+.detail-field-val {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+/* ── Equivalents list ────────────────────────── */
+.equiv-list {
+  display: flex;
+  flex-direction: column;
+}
+.equiv-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.15s;
+}
+.equiv-item:last-child { border-bottom: none; }
+.equiv-item:hover { background: rgba(255,255,255,0.04); }
+
+.equiv-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13,110,253,0.1);
+  border-radius: 8px;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.supplier-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.supplier-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.supplier-row:last-child {
+  border-bottom: none;
+}
+
+/* ── Shared badge classes (also used in list) ── */
+.comp-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.2em 0.65em;
+  border-radius: 999px;
+  line-height: 1.5;
+}
+.comp-badge-primary {
+  background: rgba(13,110,253,0.15);
+  color: #5b9cfd;
+  border: 1px solid rgba(13,110,253,0.25);
+}
+.comp-badge-muted {
+  background: rgba(255,255,255,0.06);
+  color: #adb5bd;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+</style>
+
 {% endblock %}

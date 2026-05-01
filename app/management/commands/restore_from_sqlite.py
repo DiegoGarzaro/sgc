@@ -2,9 +2,11 @@ import os
 import tarfile
 import tempfile
 
+from django.apps import apps
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
+from django.core.management.color import no_style
 
 
 class Command(BaseCommand):
@@ -28,6 +30,7 @@ class Command(BaseCommand):
         fixture_path = self._dump_sqlite(sqlite_path)
 
         self.stdout.write("Step 2/3 — Loading data into PostgreSQL (overwriting)...")
+        self._flush_target_database()
         self._load_fixture(fixture_path)
         os.unlink(fixture_path)
 
@@ -71,36 +74,20 @@ class Command(BaseCommand):
         return tmp.name
 
     def _load_fixture(self, fixture_path: str) -> None:
-        # Clear existing data except migrations table
-        from django.db import connection
-
-        with connection.cursor() as cursor:
-            cursor.execute("SET session_replication_role = replica;")
-            tables = [
-                "social_django_usersocialauth",
-                "social_django_nonce",
-                "social_django_association",
-                "social_django_code",
-                "social_django_partial",
-                "components_component_equivalents",
-                "components_component",
-                "brands_brand",
-                "categories_category",
-                "sub_categories_subcategory",
-                "packages_package",
-                "suppliers_supplier",
-                "products_product",
-                "auth_user_groups",
-                "auth_user_user_permissions",
-                "auth_user",
-                "auth_group_permissions",
-                "auth_group",
-            ]
-            for table in tables:
-                cursor.execute(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;")
-            cursor.execute("SET session_replication_role = DEFAULT;")
+        from django.db import connections
 
         call_command("loaddata", fixture_path, verbosity=1)
+
+        # loaddata preserves explicit primary keys but does not advance PostgreSQL
+        # sequences, so reset them to avoid duplicate-key errors on Railway.
+        connection = connections["default"]
+        sequence_sql = connection.ops.sequence_reset_sql(no_style(), apps.get_models())
+        with connection.cursor() as cursor:
+            for sql in sequence_sql:
+                cursor.execute(sql)
+
+    def _flush_target_database(self) -> None:
+        call_command("flush", "--no-input", "--database=default", verbosity=0)
 
     def _extract_media(self, media_tar: str) -> None:
         media_root = settings.MEDIA_ROOT

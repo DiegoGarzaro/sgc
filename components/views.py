@@ -4,8 +4,9 @@ from urllib.parse import urlencode
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.views.generic import (
     CreateView,
@@ -17,7 +18,7 @@ from django.views.generic import (
 
 from app import metrics
 
-from .forms import ComponentForm
+from .forms import ComponentForm, ComponentSupplierFormSet
 from .models import Brand, Category, Component, SubCategory
 
 ALLOWED_FILTER_FIELDS = frozenset(
@@ -47,6 +48,17 @@ ALLOWED_FILTER_LOOKUPS = frozenset(
 )
 
 ALLOWED_SORT_FIELDS = frozenset({"title", "quantity", "price"})
+
+
+def get_component_summary_data(queryset):
+    return [
+        {
+            "id": component.id,
+            "title": component.title,
+            "serie_number": component.purchase_options_label,
+        }
+        for component in queryset
+    ]
 
 
 class FilterStateMixin:
@@ -82,6 +94,53 @@ class FilterStateMixin:
         if filter_params:
             return f"{url}?{urlencode(filter_params, doseq=True)}"
         return url
+
+
+class ComponentSupplierFormSetMixin:
+    supplier_formset_class = ComponentSupplierFormSet
+    supplier_formset_prefix = "suppliers"
+
+    def get_supplier_formset(self):
+        kwargs = {
+            "instance": getattr(self, "object", None),
+            "prefix": self.supplier_formset_prefix,
+        }
+        if self.request.method in {"POST", "PUT"}:
+            kwargs["data"] = self.request.POST
+
+        return self.supplier_formset_class(**kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.setdefault("supplier_formset", self.get_supplier_formset())
+        return context
+
+    def form_invalid(self, form):
+        return self.render_to_response(
+            self.get_context_data(
+                form=form, supplier_formset=self.get_supplier_formset()
+            )
+        )
+
+    def save_equivalents(self):
+        equivalent_ids = self.request.POST.getlist("equivalent[]")
+        equivalents = Component.objects.filter(id__in=equivalent_ids)
+        self.object.equivalents.set(equivalents)
+
+    def form_valid(self, form):
+        supplier_formset = self.get_supplier_formset()
+        if not supplier_formset.is_valid():
+            return self.render_to_response(
+                self.get_context_data(form=form, supplier_formset=supplier_formset)
+            )
+
+        with transaction.atomic():
+            self.object = form.save()
+            supplier_formset.instance = self.object
+            supplier_formset.save()
+            self.save_equivalents()
+
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -142,7 +201,11 @@ class ComponentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 
 class ComponentCreateView(
-    LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, CreateView
+    ComponentSupplierFormSetMixin,
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    FilterStateMixin,
+    CreateView,
 ):
     model = Component
     template_name = "component_create.html"
@@ -156,6 +219,14 @@ class ComponentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVie
     context_object_name = "component"
     permission_required = "components.view_component"
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("category", "sub_category", "brand", "package")
+            .prefetch_related("suppliers__supplier", "equivalents__suppliers__supplier")
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["filter_params"] = urlencode(self.request.GET, doseq=True)
@@ -163,7 +234,11 @@ class ComponentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVie
 
 
 class ComponentUpdateView(
-    LoginRequiredMixin, PermissionRequiredMixin, FilterStateMixin, UpdateView
+    ComponentSupplierFormSetMixin,
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    FilterStateMixin,
+    UpdateView,
 ):
     model = Component
     template_name = "component_update.html"
@@ -176,15 +251,19 @@ class ComponentUpdateView(
 
         context["filter_params"] = urlencode(self.request.GET, doseq=True)
 
-        all_components = Component.objects.exclude(id=component.id)
+        all_components = Component.objects.exclude(id=component.id).prefetch_related(
+            "suppliers__supplier"
+        )
         context["all_components_json"] = json.dumps(
-            list(all_components.values("id", "title", "serie_number")),
+            get_component_summary_data(all_components),
             cls=DjangoJSONEncoder,
         )
 
-        equivalent_components = component.equivalents.all()
+        equivalent_components = component.equivalents.all().prefetch_related(
+            "suppliers__supplier"
+        )
         context["existing_equivalents_json"] = json.dumps(
-            list(equivalent_components.values("id", "title", "serie_number")),
+            get_component_summary_data(equivalent_components),
             cls=DjangoJSONEncoder,
         )
 
@@ -195,13 +274,6 @@ class ComponentUpdateView(
             )
 
         return context
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        equivalent_ids = self.request.POST.getlist("equivalent[]")
-        equivalents = Component.objects.filter(id__in=equivalent_ids)
-        self.object.equivalents.set(equivalents)
-        return response
 
 
 class ComponentDeleteView(
