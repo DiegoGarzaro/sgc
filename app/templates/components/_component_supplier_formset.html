@@ -1,0 +1,357 @@
+<div class="supplier-panel mb-4">
+    <div class="supplier-panel-header">
+        <div>
+            <h5 class="fw-bold mb-1">Opções de Compra</h5>
+            <p class="text-secondary small mb-0">Cadastre as combinações de fornecedor e número de série disponíveis para compra desse componente.</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 supplier-add-btn" id="addSupplierRow">
+            <i class="bi bi-plus-lg me-1"></i> Adicionar opção
+        </button>
+    </div>
+    <div class="supplier-panel-body">
+        {{ supplier_formset.management_form }}
+
+        {% if supplier_formset.non_form_errors %}
+        <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-25 text-danger mb-3">
+            {{ supplier_formset.non_form_errors }}
+        </div>
+        {% endif %}
+
+        <div id="supplierFormsetContainer" class="supplier-formset-list">
+            {% for supplier_form in supplier_formset %}
+            <div class="supplier-form-row">
+                {{ supplier_form.id }}
+                <div class="d-none">
+                    {{ supplier_form.DELETE }}
+                </div>
+
+                <div class="supplier-row-toolbar">
+                    <div class="supplier-row-tag">
+                        <i class="bi bi-truck me-2"></i>Opção de compra
+                    </div>
+                    <button type="button" class="btn btn-outline-danger supplier-remove-btn" title="Remover opção">
+                        <i class="bi bi-trash"></i>
+                        <span>Remover</span>
+                    </button>
+                </div>
+
+                <div class="supplier-row-fields">
+                    <div class="supplier-field">
+                        <label for="{{ supplier_form.supplier.id_for_label }}" class="supplier-label">Fornecedor</label>
+                        {{ supplier_form.supplier }}
+                        {{ supplier_form.supplier.errors }}
+                    </div>
+
+                    <div class="supplier-field">
+                        <label for="{{ supplier_form.serie_number.id_for_label }}" class="supplier-label">Número de Série / Part Number</label>
+                        {{ supplier_form.serie_number }}
+                        {{ supplier_form.serie_number.errors }}
+                    </div>
+                </div>
+
+                {% if supplier_form.non_field_errors %}
+                <div class="text-danger small mt-2">{{ supplier_form.non_field_errors }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="supplierEmptyState" class="supplier-empty-state d-none">
+            Adicione pelo menos uma opção de compra para salvar o componente.
+        </div>
+    </div>
+</div>
+
+<template id="supplierEmptyFormTemplate">
+    <div class="supplier-form-row">
+        {{ supplier_formset.empty_form.id }}
+        <div class="d-none">
+            {{ supplier_formset.empty_form.DELETE }}
+        </div>
+
+        <div class="supplier-row-toolbar">
+            <div class="supplier-row-tag">
+                <i class="bi bi-truck me-2"></i>Opção de compra
+            </div>
+            <button type="button" class="btn btn-outline-danger supplier-remove-btn" title="Remover opção">
+                <i class="bi bi-trash"></i>
+                <span>Remover</span>
+            </button>
+        </div>
+
+        <div class="supplier-row-fields">
+            <div class="supplier-field">
+                <label for="{{ supplier_formset.empty_form.supplier.id_for_label }}" class="supplier-label">Fornecedor</label>
+                {{ supplier_formset.empty_form.supplier }}
+            </div>
+
+            <div class="supplier-field">
+                <label for="{{ supplier_formset.empty_form.serie_number.id_for_label }}" class="supplier-label">Número de Série / Part Number</label>
+                {{ supplier_formset.empty_form.serie_number }}
+            </div>
+        </div>
+    </div>
+</template>
+
+<style>
+.supplier-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.supplier-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.supplier-panel-header h5 {
+    margin: 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--secondary-color);
+}
+
+.supplier-panel-body {
+    padding: 1.25rem;
+}
+
+.supplier-formset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.supplier-form-row {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.supplier-row-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+}
+
+.supplier-row-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    color: var(--secondary-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.supplier-row-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.supplier-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.supplier-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--secondary-color);
+    font-weight: 700;
+}
+
+.supplier-remove-btn {
+    min-height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+}
+
+.supplier-empty-state {
+    margin-top: 1rem;
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    color: var(--secondary-color);
+    font-size: 0.92rem;
+}
+
+.supplier-panel .form-control,
+.supplier-panel .form-select {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--border-color) !important;
+    color: #f3f5f7 !important;
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+}
+
+.supplier-panel .form-control:focus,
+.supplier-panel .form-select:focus {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.14);
+    border-color: rgba(13, 110, 253, 0.55) !important;
+}
+
+.supplier-panel .supplier-add-btn {
+    border-radius: 999px;
+}
+
+@media (max-width: 767px) {
+    .supplier-panel-body {
+        padding: 1rem;
+    }
+
+    .supplier-form-row {
+        padding: 0.9rem;
+    }
+
+    .supplier-row-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575px) {
+    .supplier-remove-btn {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const container = document.getElementById('supplierFormsetContainer');
+    const addButton = document.getElementById('addSupplierRow');
+    const template = document.getElementById('supplierEmptyFormTemplate');
+    const totalFormsInput = document.getElementById('id_suppliers-TOTAL_FORMS');
+    const emptyState = document.getElementById('supplierEmptyState');
+
+    if (!container || !addButton || !template || !totalFormsInput) {
+        return;
+    }
+
+    function getRows() {
+        return Array.from(container.querySelectorAll('.supplier-form-row'));
+    }
+
+    function getVisibleRows() {
+        return getRows().filter((row) => !row.classList.contains('d-none'));
+    }
+
+    function updateEmptyState() {
+        emptyState.classList.toggle('d-none', getVisibleRows().length > 0);
+    }
+
+    function reindexRows() {
+        getRows().forEach((row, index) => {
+            row.querySelectorAll('input, select, textarea, label').forEach((element) => {
+                ['id', 'name', 'for'].forEach((attribute) => {
+                    const value = element.getAttribute(attribute);
+                    if (value) {
+                        element.setAttribute(
+                            attribute,
+                            value.replace(/suppliers-(\d+|__prefix__)-/g, `suppliers-${index}-`)
+                        );
+                    }
+                });
+            });
+        });
+    }
+
+    function appendRow() {
+        const nextIndex = Number.parseInt(totalFormsInput.value, 10);
+        const rowMarkup = template.innerHTML.replace(/__prefix__/g, nextIndex);
+
+        container.insertAdjacentHTML('beforeend', rowMarkup);
+        totalFormsInput.value = String(nextIndex + 1);
+
+        const newRow = container.lastElementChild;
+        bindRow(newRow);
+        updateEmptyState();
+        return newRow;
+    }
+
+    function removeUnsavedRow(row) {
+        row.remove();
+        totalFormsInput.value = String(Math.max(Number.parseInt(totalFormsInput.value, 10) - 1, 0));
+        reindexRows();
+
+        if (!getVisibleRows().length) {
+            appendRow();
+            return;
+        }
+
+        updateEmptyState();
+    }
+
+    function removeSavedRow(row) {
+        const deleteInput = row.querySelector('input[name$="-DELETE"]');
+        if (deleteInput) {
+            deleteInput.checked = true;
+            deleteInput.value = 'on';
+        }
+        row.classList.add('d-none');
+
+        if (!getVisibleRows().length) {
+            appendRow();
+            return;
+        }
+
+        updateEmptyState();
+    }
+
+    function bindRow(row) {
+        const removeButton = row.querySelector('.supplier-remove-btn');
+        const idInput = row.querySelector('input[name$="-id"]');
+
+        if (!removeButton) {
+            return;
+        }
+
+        removeButton.addEventListener('click', function () {
+            if (idInput && idInput.value) {
+                removeSavedRow(row);
+                return;
+            }
+            removeUnsavedRow(row);
+        });
+    }
+
+    addButton.addEventListener('click', function () {
+        appendRow();
+    });
+
+    getRows().forEach((row) => bindRow(row));
+
+    if (!getRows().length) {
+        appendRow();
+        return;
+    }
+
+    updateEmptyState();
+});
+</script>

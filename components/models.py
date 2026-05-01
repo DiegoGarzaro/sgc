@@ -7,6 +7,7 @@ from brands.models import Brand
 from categories.models import Category
 from packages.models import Package
 from sub_categories.models import SubCategory
+from suppliers.models import Supplier
 
 
 class Component(models.Model):
@@ -80,3 +81,38 @@ class Component(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    @property
+    def purchase_options_count(self) -> int:
+        """Return how many supplier purchase options exist for this component."""
+        if not self.pk:
+            return 0
+        supplier_manager = getattr(self, "suppliers", None)
+        if supplier_manager is None:
+            return 0
+        return supplier_manager.count()
+
+    @property
+    def purchase_options_label(self) -> str | None:
+        """Return a short label describing available purchase options."""
+        options_count = self.purchase_options_count
+        if options_count:
+            suffix = "opção" if options_count == 1 else "opções"
+            return f"{options_count} {suffix} de compra"
+        return self.serie_number
+
+
+class ComponentSupplier(models.Model):
+    component = models.ForeignKey(
+        Component, on_delete=models.CASCADE, related_name="suppliers"
+    )
+    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT)
+    serie_number = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self) -> str:
+        supplier_name = self.supplier.name if self.supplier_id else "Sem fornecedor"
+        serie_number = self.serie_number or "Sem número de série"
+        return f"{supplier_name} - {serie_number}"
